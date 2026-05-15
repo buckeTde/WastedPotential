@@ -168,14 +168,19 @@
     .spacer { flex: 1; }
 
     /* ── Output ── */
+    .output-area { position: relative; margin-bottom: 12px; }
+    .output-area #copyBtn {
+      position: absolute; top: 7px; right: 8px;
+      padding: 5px 12px; font-size: 0.78rem;
+    }
     textarea {
       width: 100%;
-      height: 240px;
+      height: 110px;
       background: #111214;
       color: #dcddde;
       border: 1px solid #3f4147;
       border-radius: 8px;
-      padding: 14px;
+      padding: 10px 80px 10px 14px;
       font-family: "Consolas", "Courier New", monospace;
       font-size: 0.81rem;
       line-height: 1.7;
@@ -184,7 +189,7 @@
     }
     textarea:focus { border-color: #5865f2; }
 
-    .footer { margin-top: 9px; font-size: 0.72rem; color: #4e5058; }
+    .footer { margin-top: 12px; font-size: 0.72rem; color: #4e5058; }
 
     /* ── Format bar ── */
     .format-bar {
@@ -287,6 +292,20 @@
 </div>
 
 <div id="formatPreview" class="format-preview">—</div>
+
+<div class="output-area">
+  <textarea id="output" readonly placeholder="Output updates automatically as you edit…"></textarea>
+  <button class="ui-btn btn-secondary" id="copyBtn" onclick="copyOutput()">Copy</button>
+</div>
+
+<div class="bottom-bar">
+  <button class="btn-ghost" onclick="setAll(true)">All</button>
+  <button class="btn-ghost" onclick="setAll(false)">None</button>
+  <button class="btn-add" onclick="addGame()">+ Add Game</button>
+  <div class="spacer"></div>
+  <button class="btn-ghost" onclick="resetDefaults()" title="Discard all saved changes and reload defaults">Reset defaults</button>
+  <button class="btn-ghost" onclick="bakeDefaults()" title="Download an updated HTML file with current games and format baked in as new defaults">Save file ↓</button>
+</div>
 
 <!-- Column header -->
 <div class="row-grid col-header">
@@ -467,18 +486,6 @@
     </div>
   </div></div>
 
-<div class="bottom-bar">
-  <button class="btn-ghost" onclick="setAll(true)">All</button>
-  <button class="btn-ghost" onclick="setAll(false)">None</button>
-  <button class="btn-add" onclick="addGame()">+ Add Game</button>
-  <div class="spacer"></div>
-  <button class="btn-ghost" onclick="resetDefaults()" title="Discard all saved changes and reload defaults">Reset defaults</button>
-  <button class="btn-ghost" onclick="bakeDefaults()" title="Write current list into the file as new hardcoded defaults">Bake to defaults ↓</button>
-  <button class="ui-btn btn-secondary" id="copyBtn" onclick="copyOutput()">Copy</button>
-  <button class="ui-btn btn-primary" onclick="generate()">Generate LFG</button>
-</div>
-
-<textarea id="output" readonly="" placeholder="Click Generate to build the !lfg command..."></textarea>
 <p class="footer">ttsclub_lfg.html — keep in sync with ttsclub_lfg.txt</p>
 
 
