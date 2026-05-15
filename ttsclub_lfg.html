@@ -282,6 +282,23 @@
     .url-toggle.on { opacity: 0.85; }
     .url-toggle:hover { opacity: 1; }
 
+    /* ── Update banner ── */
+    .update-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1a2e1c;
+      border: 1px solid #3ba55c;
+      border-radius: 7px;
+      padding: 9px 14px;
+      font-size: 0.82rem;
+      color: #7ec882;
+      margin-bottom: 14px;
+    }
+    .update-banner.hidden { display: none; }
+    .update-banner a { color: #3ba55c; font-weight: 600; text-decoration: none; }
+    .update-banner a:hover { text-decoration: underline; }
+
     /* ── Section headers ── */
     .section-head {
       display: flex;
@@ -330,6 +347,11 @@
 
 <div class="site-header">
   <h1>TTS Club — LFG Builder <a href="https://steamcommunity.com/id/buckeT_de/" target="_blank" rel="noopener">by buckeT.de</a></h1>
+</div>
+
+<div id="updateBanner" class="update-banner hidden">
+  ✨ A newer version of this tool is available —
+  <a href="https://bucketde.github.io/WastedPotential/ttsclub_lfg.html" target="_blank" rel="noopener">open the latest online</a>
 </div>
 
 <div class="section-head first">
@@ -584,6 +606,7 @@ const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc
 const DEFAULT_WRAP = { icon:{ pre:"[ ", suf:" ]" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } };
 let GAME_DRAG_IDX = null;
 
+const BUILD_DATE  = "2026-05-16";
 const STORAGE_KEY = "lfg_saved_v3";
 const GAMES   = [];
 const checked = [];
@@ -636,9 +659,11 @@ function bakeDefaults() {
   const newDefaults = `const DEFAULTS = [\n${lines.join(",\n")},\n];`;
   const newFormat = `const FORMAT = ${JSON.stringify({ sep:FORMAT.sep, order:[...FORMAT.order], hidden:[...FORMAT.hidden], useUrl:FORMAT.useUrl, wrap:FORMAT.wrap })};`;
   const newKey = STORAGE_KEY.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`);
+  const today = new Date().toISOString().slice(0, 10);
   let html = document.documentElement.outerHTML;
   html = html.replace(/const DEFAULTS = \[[\s\S]*?\n\];/, newDefaults);
   html = html.replace(/const FORMAT = \{.*?\};/, newFormat);
+  html = html.replace(/const BUILD_DATE\s*=\s*"[^"]*"/, `const BUILD_DATE  = "${today}"`);
   html = html.replace(new RegExp(`"${STORAGE_KEY}"`), `"${newKey}"`);
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
@@ -918,6 +943,22 @@ function copyOutput() {
     setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1800);
   });
 }
+async function checkForUpdate() {
+  if (location.hostname === "bucketde.github.io") return;
+  try {
+    const r = await fetch(
+      "https://api.github.com/repos/buckeTde/WastedPotential/commits?path=ttsclub_lfg.html&per_page=1",
+      { signal: AbortSignal.timeout(6000) }
+    );
+    if (!r.ok) return;
+    const data = await r.json();
+    const latest = data[0]?.commit?.committer?.date?.slice(0, 10);
+    if (latest && latest > BUILD_DATE) {
+      document.getElementById("updateBanner").classList.remove("hidden");
+    }
+  } catch {}
+}
+
 loadData();
 render();
 renderFormatBar();
@@ -926,6 +967,7 @@ document.getElementById("sepInput").addEventListener("input", function() {
   generate();
 });
 generate();
+checkForUpdate();
 document.addEventListener("click", () => {
   document.querySelectorAll(".emoji-popup").forEach(p => p.classList.add("hidden"));
 });
