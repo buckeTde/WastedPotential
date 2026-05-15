@@ -874,6 +874,7 @@ function copyOutput() {
 async function bggFetch(url) {
   const enc = encodeURIComponent(url);
   const attempts = [
+    `https://ttsclublfg.report-e15.workers.dev/?url=${enc}`,
     url,
     `https://api.allorigins.win/raw?url=${enc}`,
     `https://corsproxy.io/?${enc}`,
