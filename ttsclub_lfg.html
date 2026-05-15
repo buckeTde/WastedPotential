@@ -872,20 +872,26 @@ function copyOutput() {
 // ── BGG Research ──────────────────────────────────────────────────────────────
 
 async function bggFetch(url) {
+  const enc = encodeURIComponent(url);
   const attempts = [
-    url,                                                                      // direct — no proxy
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,         // allorigins
-    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,                  // corsproxy
+    url,
+    `https://api.allorigins.win/raw?url=${enc}`,
+    `https://corsproxy.io/?${enc}`,
+    `https://api.codetabs.com/v1/proxy?quest=${enc}`,
+    `https://thingproxy.freeboard.io/fetch/${url}`,
   ];
+  const errs = [];
   for (const target of attempts) {
     try {
-      const res = await fetch(target);
-      if (!res.ok) continue;
-      const doc = new DOMParser().parseFromString(await res.text(), "text/xml");
+      const res = await fetch(target, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) { errs.push(`HTTP ${res.status}`); continue; }
+      const text = await res.text();
+      const doc = new DOMParser().parseFromString(text, "text/xml");
       if (!doc.querySelector("parsererror")) return doc;
-    } catch {}
+      errs.push("parse error");
+    } catch (e) { errs.push(e.message?.split(":")[0] ?? "fail"); }
   }
-  throw new Error("Could not reach BGG — all connection methods failed.");
+  throw new Error(`Could not reach BGG (tried ${attempts.length} routes: ${errs.join(", ")})`);
 }
 
 function bggFormatTime(min) {
