@@ -229,7 +229,7 @@
       background: #383a40;
       border: 1px solid #4e5058;
       border-radius: 5px;
-      padding: 4px 10px;
+      padding: 3px 6px;
       font-size: 0.8rem;
       color: #dcddde;
       cursor: grab;
@@ -263,24 +263,52 @@
       padding: 3px; border-radius: 3px; line-height: 1; transition: background 0.1s;
     }
     .emoji-popup button:hover { background: #383a40; }
-    .wrap-input {
-      width: 26px;
+    input[type="text"].wrap-input {
+      width: 18px;
       background: #1a1b1e;
       border: 1px solid #3f4147;
       border-radius: 3px;
       color: #dcddde;
       font-size: 0.75rem;
-      padding: 1px 3px;
+      padding: 1px 2px;
       text-align: center;
       outline: none;
       cursor: text;
       user-select: text;
       transition: border-color 0.12s;
     }
-    .wrap-input:focus { border-color: #5865f2; }
+    input[type="text"].wrap-input:focus { border-color: #5865f2; }
     .url-toggle { font-size: 0.75rem; margin-left: 3px; opacity: 0.2; cursor: pointer; transition: opacity 0.12s; }
     .url-toggle.on { opacity: 0.85; }
     .url-toggle:hover { opacity: 1; }
+
+    /* ── Section headers ── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 22px 0 10px;
+    }
+    .section-head.first { margin-top: 8px; }
+    .section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #72767d;
+      white-space: nowrap;
+    }
+    .section-sub {
+      font-size: 0.68rem;
+      color: #4e5058;
+      white-space: nowrap;
+    }
+    .section-head::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #2e3036;
+    }
 
     /* ── Format preview ── */
     .format-preview {
@@ -303,25 +331,38 @@
 <div class="site-header">
   <h1>TTS Club — LFG Builder <a href="https://steamcommunity.com/id/buckeT_de/" target="_blank" rel="noopener">by buckeT.de</a></h1>
 </div>
-<p class="sub">Edit fields inline · check/uncheck to include · output updates live</p>
 
-<!-- Format bar -->
+<div class="section-head first">
+  <span class="section-title">Output</span>
+  <span class="section-sub">copy this into Discord</span>
+</div>
+
+<div class="output-area">
+  <textarea id="output" readonly placeholder="Output updates automatically as you edit…"></textarea>
+  <button class="ui-btn btn-secondary" id="copyBtn" onclick="copyOutput()">Copy</button>
+</div>
+
+<div class="section-head">
+  <span class="section-title">Format</span>
+  <span class="section-sub">column order · separators · wrapping</span>
+</div>
+
 <div class="format-bar">
   <div class="format-section">
     <span class="format-label">Separator</span>
     <input class="sep-input" type="text" id="sepInput" value="┃" maxlength="5" title="Character between columns">
   </div>
   <div class="format-section">
-    <span class="format-label">Column order <small>· drag to reorder · click to toggle</small></span>
+    <span class="format-label">Columns <small>· drag to reorder · click to hide · edit pre/suf wrappers</small></span>
     <div class="col-chips" id="colChips"></div>
   </div>
 </div>
 
 <div id="formatPreview" class="format-preview">—</div>
 
-<div class="output-area">
-  <textarea id="output" readonly placeholder="Output updates automatically as you edit…"></textarea>
-  <button class="ui-btn btn-secondary" id="copyBtn" onclick="copyOutput()">Copy</button>
+<div class="section-head">
+  <span class="section-title">Games</span>
+  <span class="section-sub">check to include · drag to reorder · edit inline</span>
 </div>
 
 <div class="bottom-bar">
