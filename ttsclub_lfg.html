@@ -189,12 +189,12 @@
     }
     textarea:focus { border-color: #5865f2; }
 
-    .footer {
-      margin-top: 12px; font-size: 0.72rem; color: #4e5058;
-      display: flex; justify-content: space-between; align-items: center;
+    .site-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 6px;
     }
-    .footer a { color: #72767d; text-decoration: none; transition: color 0.12s; }
-    .footer a:hover { color: #dcddde; }
+    .site-header a { font-size: 0.78rem; color: #4e5058; text-decoration: none; transition: color 0.12s; }
+    .site-header a:hover { color: #dcddde; }
 
     /* ── Format bar ── */
     .format-bar {
@@ -281,8 +281,11 @@
 </head>
 <body>
 
-<h1>TTS Club — LFG Builder</h1>
-<p class="sub">Edit fields inline · check/uncheck to include · Generate builds the Discord <code style="color:#5865f2">!lfg</code> command</p>
+<div class="site-header">
+  <h1>TTS Club — LFG Builder</h1>
+  <a href="https://steamcommunity.com/id/buckeT_de/" target="_blank" rel="noopener">by buckeT.de</a>
+</div>
+<p class="sub">Edit fields inline · check/uncheck to include · output updates live</p>
 
 <!-- Format bar -->
 <div class="format-bar">
@@ -491,10 +494,6 @@
     </div>
   </div></div>
 
-<p class="footer">
-  <span>ttsclub_lfg.html — keep in sync with ttsclub_lfg.txt</span>
-  <span>by <a href="https://steamcommunity.com/id/buckeT_de/" target="_blank" rel="noopener">buckeT.de</a></span>
-</p>
 
 
 <script>
