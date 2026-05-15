@@ -644,16 +644,16 @@
 // Hardcoded defaults
 const DEFAULTS = [
   { checked:true,  name:"The Gang", url:"https://boardgamegeek.com/boardgame/411567/the-gang", emoji:":black_joker:", players:"3-10p", time:"~20m", weight:"1.7", desc:"Co-op Poker Heist — bet on your hand together without saying a word!" },
-  { checked:true,  name:"Hitster Bingo", url:"https://boardgamegeek.com/boardgame/383147/hitster-bingo", emoji:":musical_note:", players:"2-10p", time:"~30m", weight:"1.0", desc:"Music Bingo — recognize the hit, mark your card, shout BINGO!" },
-  { checked:true,  name:"Ship Show", url:"https://boardgamegeek.com/boardgame/378832/ship-show", emoji:":ship:", players:"3-8p", time:"~20m", weight:"1.1", desc:"Party Voting Game — ship it or skip it, split the group every time!" },
+  { checked:false,  name:"Hitster Bingo", url:"https://boardgamegeek.com/boardgame/383147/hitster-bingo", emoji:":musical_note:", players:"2-10p", time:"~30m", weight:"1.0", desc:"Music Bingo — recognize the hit, mark your card, shout BINGO!" },
+  { checked:false,  name:"Ship Show", url:"https://boardgamegeek.com/boardgame/378832/ship-show", emoji:":ship:", players:"3-8p", time:"~20m", weight:"1.1", desc:"Party Voting Game — ship it or skip it, split the group every time!" },
   { checked:true,  name:"Anno 1800", url:"https://boardgamegeek.com/boardgame/311193/anno-1800-the-board-game", emoji:":cityscape:", players:"3-4p", time:"~2h", weight:"3.1", desc:"Worker Placement City Engine Builder — industrialize faster than your rivals!" },
   { checked:true,  name:"Tapestry", url:"https://boardgamegeek.com/boardgame/286096/tapestry", emoji:":classical_building:", players:"3-5p", time:"~2h", weight:"2.9", desc:"Asymmetric Civ Builder — advance through science, military and exploration to glory!" },
-  { checked:true,  name:"Sheriff of Nottingham", url:"https://boardgamegeek.com/boardgame/157969/sheriff-of-nottingham", emoji:":bow_and_arrow:", players:"3-5p", time:"~60m", weight:"2.0", desc:"Bluffing & Bribery Card Game — smuggle goods past the Sheriff!" },
-  { checked:true,  name:"Cryptid", url:"https://boardgamegeek.com/boardgame/246784/cryptid", emoji:":snake:", players:"3-5p", time:"~50m", weight:"2.2", desc:"Competitive Deduction — share clues, eliminate locations, catch the creature first!" },
-  { checked:true,  name:"Whitehall Mystery", url:"https://boardgamegeek.com/boardgame/215312/whitehall-mystery", emoji:":fog:", players:"2-4p", time:"~60m", weight:"2.3", desc:"Hidden Movement Thriller — hunt Jack the Ripper through the foggy streets of London!" },
-  { checked:true,  name:"Terraria: The Board Game", url:"https://boardgamegeek.com/boardgame/391286/terraria-the-board-game", emoji:":pick:", players:"3-4p", time:"~2h", weight:"2.5", desc:"Co-op Deckbuilding Adventure — dig, fight, explore and build together!" },
-  { checked:true,  name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
-  { checked:true,  name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
+  { checked:false,  name:"Sheriff of Nottingham", url:"https://boardgamegeek.com/boardgame/157969/sheriff-of-nottingham", emoji:":bow_and_arrow:", players:"3-5p", time:"~60m", weight:"2.0", desc:"Bluffing & Bribery Card Game — smuggle goods past the Sheriff!" },
+  { checked:false,  name:"Cryptid", url:"https://boardgamegeek.com/boardgame/246784/cryptid", emoji:":snake:", players:"3-5p", time:"~50m", weight:"2.2", desc:"Competitive Deduction — share clues, eliminate locations, catch the creature first!" },
+  { checked:false,  name:"Whitehall Mystery", url:"https://boardgamegeek.com/boardgame/215312/whitehall-mystery", emoji:":fog:", players:"2-4p", time:"~60m", weight:"2.3", desc:"Hidden Movement Thriller — hunt Jack the Ripper through the foggy streets of London!" },
+  { checked:false,  name:"Terraria: The Board Game", url:"https://boardgamegeek.com/boardgame/391286/terraria-the-board-game", emoji:":pick:", players:"3-4p", time:"~2h", weight:"2.5", desc:"Co-op Deckbuilding Adventure — dig, fight, explore and build together!" },
+  { checked:false,  name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
+  { checked:false,  name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
 ];
 const COLUMNS = [
   { id:"icon",    label:"Icon",    render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
@@ -665,7 +665,7 @@ const COLUMNS = [
 ];
 
 const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"", suf:"" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } } };
-const DEFAULT_WRAP = { icon:{ pre:"[ ", suf:" ]" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } };
+const DEFAULT_WRAP = { icon:{ pre:"", suf:"" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } };
 let GAME_DRAG_IDX = null;
 
 const BUILD_DATE  = "2026-05-16";
