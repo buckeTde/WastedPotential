@@ -602,7 +602,7 @@ const COLUMNS = [
   { id:"desc",    label:"Description", render: g => `${FORMAT.wrap.desc?.pre??""}${g.desc}${FORMAT.wrap.desc?.suf??""}` },
 ];
 
-const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"[ ", suf:" ]" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } } };
+const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"", suf:"" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } } };
 const DEFAULT_WRAP = { icon:{ pre:"[ ", suf:" ]" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } };
 let GAME_DRAG_IDX = null;
 
@@ -893,11 +893,47 @@ function generateLine(g) {
 }
 
 const EMOJI_MAP = {
-  black_joker:"🃏",moyai:"🗿",cityscape:"🌆",classical_building:"🏛️",anchor:"⚓",
-  bow_and_arrow:"🏹",snake:"🐍",fog:"🌫️",pick:"⛏️",dragon:"🐉",skull:"💀",
-  moneybag:"💰",sword:"⚔️",shield:"🛡️",detective:"🕵️",brain:"🧠",rocket:"🚀",
-  chess_pawn:"♟️",gem:"💎",wolf:"🐺",farmer:"🧑‍🌾",trophy:"🏆",fire:"🔥",
-  star:"⭐",zap:"⚡",crown:"👑",ghost:"👻",bomb:"💣",key:"🔑",crystal_ball:"🔮",
+  // Cards & games
+  black_joker:"🃏",spades:"♠️",hearts:"♥️",clubs:"♣️",diamonds:"♦️",
+  chess_pawn:"♟️",game_die:"🎲",jigsaw:"🧩",slot_machine:"🎰",dart:"🎯",game_controller:"🎮",
+  // People & roles
+  ghost:"👻",skull:"💀",detective:"🕵️",farmer:"🧑‍🌾",
+  ninja:"🥷",robot:"🤖",alien:"👽",vampire:"🧛",zombie:"🧟",cowboy:"🤠",
+  superhero:"🦸",supervillain:"🦹",mage:"🧙",
+  // Animals
+  wolf:"🐺",dragon:"🐉",snake:"🐍",
+  lion:"🦁",tiger:"🐯",bear:"🐻",fox:"🦊",owl:"🦉",eagle:"🦅",bat:"🦇",
+  unicorn:"🦄",shark:"🦈",octopus:"🐙",crab:"🦀",whale:"🐳",dolphin:"🐬",
+  spider:"🕷️",scorpion:"🦂",bee:"🐝",butterfly:"🦋",frog:"🐸",
+  crocodile:"🐊",elephant:"🐘",penguin:"🐧",parrot:"🦜",deer:"🦌",boar:"🐗",
+  // Nature & environment
+  fire:"🔥",snowflake:"❄️",ocean:"🌊",volcano:"🌋",fog:"🌫️",
+  mushroom:"🍄",cactus:"🌵",seedling:"🌱",herb:"🌿",rose:"🌹",ear_of_rice:"🌾",
+  island:"🏝️",desert:"🏜️",mountain_snow:"🏔️",
+  // Weapons & combat
+  sword:"⚔️",shield:"🛡️",bow_and_arrow:"🏹",
+  axe:"🪓",dagger:"🗡️",knife:"🔪",boxing_glove:"🥊",fencing:"🤺",
+  // Magic & mystery
+  crystal_ball:"🔮",magic_wand:"🪄",scroll:"📜",dragon_face:"🐲",
+  // Tools & objects
+  pick:"⛏️",key:"🔑",bomb:"💣",
+  map:"🗺️",compass:"🧭",telescope:"🔭",microscope:"🔬",test_tube:"🧪",
+  lock:"🔒",hammer:"🔨",gear:"⚙️",hourglass_flowing_sand:"⏳",
+  candle:"🕯️",lantern:"🏮",mag:"🔍",flashlight:"🔦",bulb:"💡",
+  coin:"🪙",dna:"🧬",satellite:"📡",abacus:"🧮",
+  // Places & transport
+  cityscape:"🌆",classical_building:"🏛️",anchor:"⚓",
+  castle:"🏰",japanese_castle:"🏯",factory:"🏭",tent:"⛺",
+  ship:"🚢",sailboat:"⛵",airplane:"✈️",
+  // Symbols & misc
+  crown:"👑",gem:"💎",trophy:"🏆",star:"⭐",zap:"⚡",
+  moneybag:"💰",fleur_de_lis:"⚜️",trident:"🔱",biohazard:"☣️",
+  moyai:"🗿",brain:"🧠",rocket:"🚀",
+  // People & social
+  busts_in_silhouette:"👥",handshake:"🤝",space_invader:"👾",
+  globe_with_meridians:"🌐",chart_with_upwards_trend:"📈",
+  // Arts & music
+  musical_note:"🎵",microphone:"🎤",art:"🎨",performing_arts:"🎭",
 };
 
 function discordMd(s) {
