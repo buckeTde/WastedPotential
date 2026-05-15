@@ -35,6 +35,36 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
+    .col-header span[data-tip] { cursor: help; border-bottom: 1px dotted #4e5058; }
+    .col-header span[data-tip]:hover { color: #b9bbbe; }
+
+    /* ── Column tooltips ── */
+    [data-tip] { position: relative; }
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111214;
+      border: 1px solid #3f4147;
+      border-radius: 6px;
+      padding: 7px 11px;
+      font-size: 0.76rem;
+      font-weight: 400;
+      color: #b9bbbe;
+      text-transform: none;
+      letter-spacing: 0;
+      max-width: 260px;
+      white-space: normal;
+      line-height: 1.5;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 200;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
+    [data-tip]:hover::after { opacity: 1; }
 
     /* ── Game card ── */
     .game-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
@@ -400,12 +430,12 @@
 <div class="row-grid col-header">
   <span></span>
   <span></span>
-  <span>Name</span>
-  <span>Icon</span>
-  <span>Players</span>
-  <span>Time</span>
-  <span>Weight</span>
-  <span>Description</span>
+  <span data-tip="Becomes a clickable hyperlink in Discord — leave the URL field empty for plain text">Name</span>
+  <span data-tip="Emoji shown in the picker are quick picks — any Discord emoji works by typing :emoji_name: directly in the field">Icon</span>
+  <span data-tip="Recommended player count from BGG, e.g. 3-6p or 4p">Players</span>
+  <span data-tip="Estimated play time — output exactly as typed, e.g. ~45m, ~2h, or 60-120m">Time</span>
+  <span data-tip="BGG complexity rating, 1 decimal place — e.g. 2.3 (out of 5)">Weight</span>
+  <span data-tip="Short genre label and a punchy tagline — e.g. Bluffing Game — smuggle goods past the Sheriff!">Description</span>
   <span></span>
   <span></span>
   <span></span>
@@ -597,7 +627,7 @@ const COLUMNS = [
   { id:"icon",    label:"Icon",    render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
   { id:"name",    label:"Name",    render: g => FORMAT.useUrl && g.url.trim() ? `[**${g.name}**](${g.url})` : `**${g.name}**` },
   { id:"players", label:"Players",     render: g => `${FORMAT.wrap.players?.pre??""}${g.players}${FORMAT.wrap.players?.suf??""}` },
-  { id:"time",    label:"Time",        render: g => { const t = g.time.startsWith("~") ? g.time : "~"+g.time; return `${FORMAT.wrap.time?.pre??"*"}${t}${FORMAT.wrap.time?.suf??"*"}`; }},
+  { id:"time",    label:"Time",        render: g => `${FORMAT.wrap.time?.pre??"*"}${g.time}${FORMAT.wrap.time?.suf??"*"}` },
   { id:"weight",  label:"Weight",      render: g => `${FORMAT.wrap.weight?.pre??"*w: "}${g.weight}${FORMAT.wrap.weight?.suf??"/5*"}` },
   { id:"desc",    label:"Description", render: g => `${FORMAT.wrap.desc?.pre??""}${g.desc}${FORMAT.wrap.desc?.suf??""}` },
 ];
