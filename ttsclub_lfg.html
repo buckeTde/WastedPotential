@@ -1,0 +1,1008 @@
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <title>TTS Club — LFG Builder</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #1e1f22;
+      color: #dcddde;
+      padding: 32px;
+      min-height: 100vh;
+    }
+
+    h1 { font-size: 1.3rem; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    p.sub { font-size: 0.82rem; color: #72767d; margin-bottom: 20px; }
+
+    /* ── Column grid shared by header + every row ── */
+    .row-grid {
+      display: grid;
+      grid-template-columns: 22px 1.6fr 90px 68px 68px 58px 3fr 26px 26px 26px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    /* ── Column header ── */
+    .col-header {
+      padding: 0 0 6px 2px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #3f4147;
+    }
+    .col-header span {
+      font-size: 0.7rem;
+      color: #72767d;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Game card ── */
+    .game-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+
+    .game-card {
+      background: #2b2d31;
+      border: 1px solid #3f4147;
+      border-radius: 7px;
+      padding: 7px 8px 6px;
+      transition: border-color 0.12s;
+    }
+    .game-card:hover { border-color: #5865f2; }
+    .game-card.unchecked { opacity: 0.4; }
+
+    /* top row of card */
+    .card-top { margin-bottom: 5px; }
+
+    /* URL row */
+    .card-url {
+      display: grid;
+      grid-template-columns: 22px 1fr 26px;
+      gap: 6px;
+      align-items: center;
+    }
+    .url-label {
+      font-size: 0.67rem;
+      color: #4e5058;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding-left: 2px;
+      white-space: nowrap;
+    }
+
+    /* Checkbox */
+    input[type="checkbox"] {
+      width: 15px; height: 15px;
+      accent-color: #5865f2;
+      cursor: pointer;
+    }
+
+    /* Text inputs */
+    input[type="text"] {
+      width: 100%;
+      background: #1e1f22;
+      border: 1px solid #2e3036;
+      border-radius: 4px;
+      color: #dcddde;
+      font-size: 0.82rem;
+      padding: 4px 7px;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+    input[type="text"]:focus { border-color: #5865f2; background: #16171a; }
+    input[type="text"]::placeholder { color: #4e5058; }
+
+    /* Icon buttons (save / revert / trash) */
+    .save-btn, .revert-btn, .trash-btn {
+      background: transparent;
+      border: none;
+      color: #4e5058;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 5px;
+      border-radius: 4px;
+      transition: color 0.12s, background 0.12s;
+    }
+    .save-btn   { font-size: 1rem; }
+    .revert-btn { font-size: 1rem; }
+    .trash-btn  { font-size: 0.95rem; }
+
+    .save-btn:hover   { color: #3ba55c; background: #1d3a26; }
+    .save-btn.saved   { color: #3ba55c; }
+    .revert-btn:hover { color: #faa61a; background: #2e2412; }
+    .trash-btn:hover  { color: #ed4245; background: #3a1f20; }
+
+    /* ── Bottom bar ── */
+    .bottom-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    button.ui-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-primary   { background: #5865f2; color: #fff; }
+    .btn-primary:hover   { background: #4752c4; }
+    .btn-secondary { background: #3f4147; color: #dcddde; }
+    .btn-secondary:hover { background: #4e5058; }
+    .btn-secondary.copied { background: #3ba55c; color: #fff; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #3f4147;
+      color: #9d9fa6;
+      padding: 6px 11px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .btn-ghost:hover { border-color: #72767d; color: #dcddde; }
+    .btn-add {
+      background: transparent;
+      border: 1px solid #3ba55c;
+      color: #3ba55c;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-add:hover { background: #1d3a26; }
+
+    .spacer { flex: 1; }
+
+    /* ── Output ── */
+    textarea {
+      width: 100%;
+      height: 240px;
+      background: #111214;
+      color: #dcddde;
+      border: 1px solid #3f4147;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.81rem;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus { border-color: #5865f2; }
+
+    .footer { margin-top: 9px; font-size: 0.72rem; color: #4e5058; }
+
+    /* ── BGG Research button ── */
+    .btn-bgg {
+      background: transparent;
+      border: 1px solid #5865f2;
+      color: #5865f2;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-bgg:hover { background: #2e3157; }
+
+    /* ── BGG modal ── */
+    .bgg-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .bgg-overlay.hidden { display: none; }
+    .bgg-box {
+      background: #2b2d31;
+      border: 1px solid #3f4147;
+      border-radius: 10px;
+      padding: 24px;
+      width: 400px;
+      max-width: 92vw;
+    }
+    .bgg-box h2 { font-size: 1rem; font-weight: 600; color: #fff; margin-bottom: 14px; }
+    .bgg-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .bgg-input {
+      flex: 1;
+      background: #1e1f22; border: 1px solid #2e3036; border-radius: 5px;
+      color: #dcddde; font-size: 0.85rem; padding: 7px 10px; outline: none;
+    }
+    .bgg-input:focus { border-color: #5865f2; }
+    .bgg-results { display: flex; flex-direction: column; gap: 4px; min-height: 20px; }
+    .bgg-result {
+      background: #1e1f22; border: 1px solid #2e3036; border-radius: 5px;
+      color: #dcddde; font-size: 0.84rem; padding: 8px 10px;
+      text-align: left; cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .bgg-result:hover { border-color: #5865f2; background: #2e3157; }
+    .bgg-year { color: #72767d; font-size: 0.78rem; font-weight: normal; }
+    .bgg-status { color: #72767d; font-size: 0.82rem; padding: 6px 0; }
+    .bgg-err   { color: #ed4245; font-size: 0.82rem; padding: 6px 0; }
+    .bgg-footer { margin-top: 12px; }
+    .bgg-warning {
+      background: #2e2412; border: 1px solid #faa61a; border-radius: 6px;
+      padding: 10px 12px; font-size: 0.79rem; color: #faa61a;
+      margin-bottom: 12px; line-height: 1.65;
+    }
+    .bgg-warning code {
+      background: #1a1310; padding: 1px 5px; border-radius: 3px;
+      font-family: "Consolas", monospace; font-size: 0.78rem;
+    }
+    .bgg-sep {
+      text-align: center; color: #4e5058; font-size: 0.72rem;
+      margin: 12px 0; position: relative;
+    }
+    .bgg-sep::before, .bgg-sep::after {
+      content: ""; position: absolute; top: 50%;
+      width: 36%; height: 1px; background: #3f4147;
+    }
+    .bgg-sep::before { left: 0; } .bgg-sep::after { right: 0; }
+
+    /* ── Format bar ── */
+    .format-bar {
+      background: #2b2d31;
+      border: 1px solid #3f4147;
+      border-radius: 7px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .format-section { display: flex; flex-direction: column; gap: 6px; }
+    .format-label { font-size: 0.7rem; color: #72767d; text-transform: uppercase; letter-spacing: 0.06em; }
+    .format-label small { text-transform: none; letter-spacing: 0; font-size: 0.65rem; color: #4e5058; }
+    .sep-input {
+      width: 52px;
+      background: #1e1f22;
+      border: 1px solid #2e3036;
+      border-radius: 4px;
+      color: #dcddde;
+      font-size: 0.95rem;
+      padding: 4px 8px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+    .sep-input:focus { border-color: #5865f2; }
+    .col-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .col-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #383a40;
+      border: 1px solid #4e5058;
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      color: #dcddde;
+      cursor: grab;
+      user-select: none;
+      transition: border-color 0.12s, opacity 0.12s, background 0.12s;
+    }
+    .col-chip:hover { border-color: #5865f2; }
+    .col-chip.excluded { opacity: 0.3; text-decoration: line-through; }
+    .col-chip.dragging { opacity: 0.3; cursor: grabbing; }
+    .col-chip.drag-over { border-color: #5865f2; background: #2e3157; }
+    .drag-handle { color: #4e5058; font-size: 0.85rem; }
+    .wrap-input {
+      width: 24px;
+      background: #1a1b1e;
+      border: 1px solid #3f4147;
+      border-radius: 3px;
+      color: #dcddde;
+      font-size: 0.75rem;
+      padding: 1px 3px;
+      text-align: center;
+      outline: none;
+      cursor: text;
+      user-select: text;
+      transition: border-color 0.12s;
+    }
+    .wrap-input:focus { border-color: #5865f2; }
+    .url-toggle { font-size: 0.75rem; margin-left: 3px; opacity: 0.2; cursor: pointer; transition: opacity 0.12s; }
+    .url-toggle.on { opacity: 0.85; }
+    .url-toggle:hover { opacity: 1; }
+
+    /* ── Format preview ── */
+    .format-preview {
+      background: #111214;
+      border: 1px solid #2e3036;
+      border-radius: 6px;
+      padding: 7px 12px;
+      margin-bottom: 12px;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.79rem;
+      color: #4e5058;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+    .format-preview.live { color: #9d9fa6; }
+  </style>
+</head>
+<body>
+
+<h1>TTS Club — LFG Builder</h1>
+<p class="sub">Edit fields inline · check/uncheck to include · Generate builds the Discord <code style="color:#5865f2">!lfg</code> command</p>
+
+<!-- Format bar -->
+<div class="format-bar">
+  <div class="format-section">
+    <span class="format-label">Separator</span>
+    <input class="sep-input" type="text" id="sepInput" value="┃" maxlength="5" title="Character between columns">
+  </div>
+  <div class="format-section">
+    <span class="format-label">Column order <small>· drag to reorder · click to toggle</small></span>
+    <div class="col-chips" id="colChips"></div>
+  </div>
+</div>
+
+<div id="formatPreview" class="format-preview">—</div>
+
+<!-- Column header -->
+<div class="row-grid col-header">
+  <span></span>
+  <span>Name</span>
+  <span>Icon</span>
+  <span>Players</span>
+  <span>Time</span>
+  <span>Weight</span>
+  <span>Description</span>
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<div class="game-list" id="gameList"><div class="game-card" data-index="0">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="The Gang" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":black_joker:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="3-6p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~20m" placeholder="~20m">
+      <input type="text" data-field="weight" value="1.7" placeholder="2.0">
+      <input type="text" data-field="desc" value="Co-op Poker Heist — bet on your hand together without saying a word!" placeholder="Genre — tagline!">
+      <button class="save-btn" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/411567/the-gang" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="1">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="7 Wonders Architects" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":moyai:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="2-7p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~25m" placeholder="~20m">
+      <input type="text" data-field="weight" value="1.7" placeholder="2.0">
+      <input type="text" data-field="desc" value="Card Drafting Civ Builder — race to complete your Wonder before your rivals!" placeholder="Genre — tagline!">
+      <button class="save-btn" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/359970/7-wonders-architects" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="2">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="Anno 1800" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":cityscape:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="2-4p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~2h" placeholder="~20m">
+      <input type="text" data-field="weight" value="3.1" placeholder="2.0">
+      <input type="text" data-field="desc" value="Worker Placement City Engine Builder — industrialize faster than your rivals!" placeholder="Genre — tagline!">
+      <button class="save-btn" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/311193/anno-1800-the-board-game" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="3">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="Tapestry" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":classical_building:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="1-5p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~2h" placeholder="~20m">
+      <input type="text" data-field="weight" value="2.9" placeholder="2.0">
+      <input type="text" data-field="desc" value="Asymmetric Civ Builder — advance through science, military and exploration to glory!" placeholder="Genre — tagline!">
+      <button class="save-btn" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/286096/tapestry" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="4">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="Seas of Strife" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":anchor:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="3-6p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~45m" placeholder="~20m">
+      <input type="text" data-field="weight" value="1.5" placeholder="2.0">
+      <input type="text" data-field="desc" value="Trick-Avoiding Card Game — don't win tricks or you'll sink!" placeholder="Genre — tagline!">
+      <button class="save-btn" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/225482/seas-of-strife" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="5">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="Sheriff of Nottingham" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":bow_and_arrow:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="3-5p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~60m" placeholder="~20m">
+      <input type="text" data-field="weight" value="2.0" placeholder="2.0">
+      <input type="text" data-field="desc" value="Bluffing &amp; Bribery Card Game — smuggle goods past the Sheriff!" placeholder="Genre — tagline!">
+      <button class="save-btn" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/157969/sheriff-of-nottingham" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="6">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="Cryptid" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":snake:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="3-5p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~50m" placeholder="~20m">
+      <input type="text" data-field="weight" value="2.2" placeholder="2.0">
+      <input type="text" data-field="desc" value="Competitive Deduction — share clues, eliminate locations, catch the creature first!" placeholder="Genre — tagline!">
+      <button class="save-btn" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/246784/cryptid" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="7">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="Whitehall Mystery" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":fog:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="2-4p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~60m" placeholder="~20m">
+      <input type="text" data-field="weight" value="2.3" placeholder="2.0">
+      <input type="text" data-field="desc" value="Hidden Movement Thriller — hunt Jack the Ripper through the foggy streets of London!" placeholder="Genre — tagline!">
+      <button class="save-btn saved" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/215312/whitehall-mystery" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div><div class="game-card" data-index="8">
+    <div class="row-grid card-top">
+      <input type="checkbox" checked="">
+      <input type="text" data-field="name" value="Terraria: The Board Game" placeholder="Game name">
+      <input type="text" data-field="emoji" value=":pick:" placeholder=":emoji:">
+      <input type="text" data-field="players" value="1-4p" placeholder="3-6p">
+      <input type="text" data-field="time" value="~2h" placeholder="~20m">
+      <input type="text" data-field="weight" value="2.5" placeholder="2.0">
+      <input type="text" data-field="desc" value="Co-op Deckbuilding Adventure — dig, fight, explore and build together!" placeholder="Genre — tagline!">
+      <button class="save-btn saved" title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn" title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      <input type="text" data-field="url" value="https://boardgamegeek.com/boardgame/391286/terraria-the-board-game" placeholder="https://boardgamegeek.com/boardgame/...">
+      <span class="url-label">BGG URL</span>
+    </div>
+  </div></div>
+
+<div class="bottom-bar">
+  <button class="btn-ghost" onclick="setAll(true)">All</button>
+  <button class="btn-ghost" onclick="setAll(false)">None</button>
+  <button class="btn-add" onclick="addGame()">+ Add Game</button>
+  <button class="btn-bgg" onclick="openBggModal()">🔍 Research Game</button>
+  <div class="spacer"></div>
+  <button class="btn-ghost" onclick="resetDefaults()" title="Discard all saved changes and reload defaults">Reset defaults</button>
+  <button class="btn-ghost" onclick="bakeDefaults()" title="Write current list into the file as new hardcoded defaults">Bake to defaults ↓</button>
+  <button class="ui-btn btn-secondary" id="copyBtn" onclick="copyOutput()">Copy</button>
+  <button class="ui-btn btn-primary" onclick="generate()">Generate LFG</button>
+</div>
+
+<textarea id="output" readonly="" placeholder="Click Generate to build the !lfg command..."></textarea>
+<p class="footer">ttsclub_lfg.html — keep in sync with ttsclub_lfg.txt</p>
+
+<div id="bggModal" class="bgg-overlay hidden">
+  <div class="bgg-box">
+    <h2>Research on BoardGameGeek</h2>
+
+    <div id="bggFileWarning" class="bgg-warning hidden">
+      ⚠ <strong>Browser blocks external requests from local files.</strong><br>
+      Search is unavailable. Paste a BGG URL below to add a game stub — fill in players, time and weight manually.<br>
+      For full auto-fill, serve from a local server: <code>python -m http.server 8000</code>
+    </div>
+
+    <div class="bgg-row">
+      <input type="text" id="bggQuery" class="bgg-input" placeholder="Game name…"
+             onkeydown="if(event.key==='Enter') runBggSearch()">
+      <button class="ui-btn btn-primary" onclick="runBggSearch()">Search</button>
+    </div>
+    <div id="bggResults" class="bgg-results"></div>
+
+    <div class="bgg-sep">or paste a BGG URL</div>
+    <div class="bgg-row">
+      <input type="text" id="bggUrlInput" class="bgg-input"
+             placeholder="https://boardgamegeek.com/boardgame/246784/cryptid"
+             onkeydown="if(event.key==='Enter') addByBggUrl()">
+      <button class="ui-btn btn-primary" onclick="addByBggUrl()">Add</button>
+    </div>
+
+    <div class="bgg-footer">
+      <button class="btn-ghost" onclick="closeBggModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Hardcoded defaults — updated by Claude when adding/editing games
+const DEFAULTS = [
+  { name:"The Gang", url:"https://boardgamegeek.com/boardgame/411567/the-gang", emoji:":black_joker:", players:"3-10p", time:"~20m", weight:"1.7", desc:"Co-op Poker Heist — bet on your hand together without saying a word!" },
+  { name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
+  { name:"Anno 1800", url:"https://boardgamegeek.com/boardgame/311193/anno-1800-the-board-game", emoji:":cityscape:", players:"3-4p", time:"~2h", weight:"3.1", desc:"Worker Placement City Engine Builder — industrialize faster than your rivals!" },
+  { name:"Tapestry", url:"https://boardgamegeek.com/boardgame/286096/tapestry", emoji:":classical_building:", players:"3-5p", time:"~2h", weight:"2.9", desc:"Asymmetric Civ Builder — advance through science, military and exploration to glory!" },
+  { name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
+  { name:"Sheriff of Nottingham", url:"https://boardgamegeek.com/boardgame/157969/sheriff-of-nottingham", emoji:":bow_and_arrow:", players:"3-5p", time:"~60m", weight:"2.0", desc:"Bluffing & Bribery Card Game — smuggle goods past the Sheriff!" },
+  { name:"Cryptid", url:"https://boardgamegeek.com/boardgame/246784/cryptid", emoji:":snake:", players:"3-5p", time:"~50m", weight:"2.2", desc:"Competitive Deduction — share clues, eliminate locations, catch the creature first!" },
+  { name:"Whitehall Mystery", url:"https://boardgamegeek.com/boardgame/215312/whitehall-mystery", emoji:":fog:", players:"2-4p", time:"~60m", weight:"2.3", desc:"Hidden Movement Thriller — hunt Jack the Ripper through the foggy streets of London!" },
+  { name:"Terraria: The Board Game", url:"https://boardgamegeek.com/boardgame/391286/terraria-the-board-game", emoji:":pick:", players:"3-4p", time:"~2h", weight:"2.5", desc:"Co-op Deckbuilding Adventure — dig, fight, explore and build together!" },
+];
+
+const COLUMNS = [
+  { id:"icon",    label:"Icon",    render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
+  { id:"name",    label:"Name",    render: g => FORMAT.useUrl && g.url.trim() ? `[**${g.name}**](${g.url})` : `**${g.name}**` },
+  { id:"players", label:"Players", render: g => `${FORMAT.wrap.players?.pre??""}${g.players}${FORMAT.wrap.players?.suf??""}` },
+  { id:"time",    label:"Time",        render: g => `*${g.time.startsWith("~") ? g.time : "~"+g.time}*` },
+  { id:"weight",  label:"Weight",      render: g => `*w: ${g.weight}/5*` },
+  { id:"desc",    label:"Description", render: g => g.desc },
+];
+
+const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"[ ", suf:" ]" }, players:{ pre:"", suf:"" } } };
+
+const STORAGE_KEY = "lfg_saved_v3";
+const GAMES   = [];
+const checked = [];
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      GAMES.splice(0, GAMES.length, ...s.games);
+      checked.splice(0, checked.length, ...s.checked);
+      if (s.format) {
+        FORMAT.sep    = s.format.sep    ?? "┃";
+        FORMAT.order  = s.format.order  ?? ["icon","name","players","time","weight","desc"];
+        FORMAT.hidden = s.format.hidden ?? [];
+        FORMAT.useUrl = s.format.useUrl ?? true;
+        FORMAT.wrap   = s.format.wrap   ?? { icon:{ pre:"[ ", suf:" ]" }, players:{ pre:"", suf:"" } };
+      }
+      return;
+    }
+  } catch {}
+  GAMES.splice(0, GAMES.length, ...DEFAULTS.map((g, i) => ({ ...g, _defaultIdx: i })));
+  checked.splice(0, checked.length, ...GAMES.map(() => true));
+}
+
+function persistData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    games: GAMES, checked: [...checked],
+    format: { sep: FORMAT.sep, order: [...FORMAT.order], hidden: [...FORMAT.hidden], useUrl: FORMAT.useUrl, wrap: FORMAT.wrap }
+  }));
+}
+
+function resetDefaults() {
+  if (!confirm("Discard all saved changes and restore defaults?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  FORMAT.sep = "┃"; FORMAT.order = ["icon","name","players","time","weight","desc"]; FORMAT.hidden = []; FORMAT.useUrl = true;
+  FORMAT.wrap = { icon:{ pre:"[ ", suf:" ]" }, players:{ pre:"", suf:"" } };
+  loadData();
+  render();
+  renderFormatBar();
+  generate();
+}
+
+function bakeDefaults() {
+  if (!confirm("Write current game list and format settings into the file as new hardcoded defaults?\n\nThis downloads an updated ttsclub_lfg.html — replace your current file with it.")) return;
+  const FIELDS = ["name","url","emoji","players","time","weight","desc"];
+  const lines = GAMES.map(g =>
+    `  { ${FIELDS.map(f => `${f}:${JSON.stringify(g[f] || "")}`).join(", ")} }`
+  );
+  const newDefaults = `const DEFAULTS = [\n${lines.join(",\n")},\n];`;
+  const newFormat = `const FORMAT = ${JSON.stringify({ sep:FORMAT.sep, order:[...FORMAT.order], hidden:[...FORMAT.hidden], useUrl:FORMAT.useUrl, wrap:FORMAT.wrap })};`;
+  const newKey = STORAGE_KEY.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`);
+  let html = document.documentElement.outerHTML;
+  html = html.replace(/const DEFAULTS = \[[\s\S]*?\n\];/, newDefaults);
+  html = html.replace(/const FORMAT = \{.*?\};/, newFormat);
+  html = html.replace(new RegExp(`"${STORAGE_KEY}"`), `"${newKey}"`);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+  a.download = "ttsclub_lfg.html";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function esc(s) { return (s || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
+
+function createCard(g, i) {
+  const card = document.createElement("div");
+  card.className = "game-card" + (checked[i] ? "" : " unchecked");
+  card.dataset.index = i;
+
+  const inp = (field, val, ph) =>
+    `<input type="text" data-field="${field}" value="${esc(val)}" placeholder="${ph}">`;
+
+  card.innerHTML = `
+    <div class="row-grid card-top">
+      <input type="checkbox" ${checked[i] ? "checked" : ""}>
+      ${inp("name",    g.name,    "Game name")}
+      ${inp("emoji",   g.emoji,   ":emoji:")}
+      ${inp("players", g.players, "3-6p")}
+      ${inp("time",    g.time,    "~20m")}
+      ${inp("weight",  g.weight,  "2.0")}
+      ${inp("desc",    g.desc,    "Genre — tagline!")}
+      <button class="save-btn"   title="Save as default">✓</button>
+      <button class="revert-btn" title="Revert to default">↺</button>
+      <button class="trash-btn"  title="Delete game">🗑</button>
+    </div>
+    <div class="card-url">
+      <span></span>
+      ${inp("url", g.url, "https://boardgamegeek.com/boardgame/...")}
+      <span class="url-label">BGG URL</span>
+    </div>
+  `;
+
+  card.querySelector("input[type=checkbox]").addEventListener("change", function() {
+    checked[i] = this.checked;
+    card.classList.toggle("unchecked", !this.checked);
+    generate();
+  });
+
+  card.querySelector(".save-btn").addEventListener("click", function() {
+    // Snapshot current values so ↺ reverts to this saved state
+    GAMES[i]._snap = { name:GAMES[i].name, url:GAMES[i].url, emoji:GAMES[i].emoji,
+      players:GAMES[i].players, time:GAMES[i].time, weight:GAMES[i].weight, desc:GAMES[i].desc };
+    persistData();
+    generate();
+    this.classList.add("saved");
+    setTimeout(() => { this.classList.remove("saved"); }, 1500);
+  });
+
+  card.querySelector(".revert-btn").addEventListener("click", () => {
+    const source = GAMES[i]._snap || (GAMES[i]._defaultIdx !== undefined ? DEFAULTS[GAMES[i]._defaultIdx] : null);
+    const fields = ["name","url","emoji","players","time","weight","desc"];
+    if (source) {
+      fields.forEach(f => { GAMES[i][f] = source[f] || ""; });
+    } else {
+      fields.forEach(f => { GAMES[i][f] = ""; });
+    }
+    render();
+    generate();
+  });
+
+  card.querySelector(".trash-btn").addEventListener("click", () => {
+    const label = GAMES[i].name.trim() || "this game";
+    if (!confirm(`Remove "${label}" from the list?`)) return;
+    GAMES.splice(i, 1);
+    checked.splice(i, 1);
+    render();
+    persistData();
+  });
+
+  card.querySelectorAll("input[type=text]").forEach(input => {
+    input.addEventListener("input", () => { GAMES[i][input.dataset.field] = input.value; });
+  });
+
+  return card;
+}
+
+function makeWrapInput(val, title, onChange) {
+  const inp = document.createElement("input");
+  inp.type = "text"; inp.className = "wrap-input"; inp.value = val; inp.title = title;
+  inp.addEventListener("click",     e => e.stopPropagation());
+  inp.addEventListener("mousedown", e => e.stopPropagation());
+  inp.addEventListener("input", () => onChange(inp.value));
+  return inp;
+}
+
+function renderFormatBar() {
+  document.getElementById("sepInput").value = FORMAT.sep;
+  const container = document.getElementById("colChips");
+  container.innerHTML = "";
+  let dragSrcIdx = null;
+  FORMAT.order.forEach((id, idx) => {
+    const col = COLUMNS.find(c => c.id === id);
+    const chip = document.createElement("div");
+    chip.className = "col-chip" + (FORMAT.hidden.includes(id) ? " excluded" : "");
+    chip.draggable = true;
+    chip.innerHTML = "";
+    const handle = document.createElement("span");
+    handle.className = "drag-handle"; handle.textContent = "⠿";
+    chip.appendChild(handle);
+
+    const hasWrap = ["icon","players"].includes(id);
+    if (hasWrap) {
+      const w = FORMAT.wrap[id] || { pre:"", suf:"" };
+      chip.appendChild(makeWrapInput(w.pre, "Prefix — shown before the value", v => { (FORMAT.wrap[id] ??= {}).pre = v; generate(); }));
+    }
+
+    const lbl = document.createElement("span"); lbl.textContent = col.label;
+    chip.appendChild(lbl);
+
+    if (hasWrap) {
+      const w = FORMAT.wrap[id] || { pre:"", suf:"" };
+      chip.appendChild(makeWrapInput(w.suf, "Suffix — shown after the value", v => { (FORMAT.wrap[id] ??= {}).suf = v; generate(); }));
+    }
+
+    if (id === "name") {
+      const tog = document.createElement("span");
+      tog.className = "url-toggle" + (FORMAT.useUrl ? " on" : "");
+      tog.textContent = "🔗";
+      tog.title = FORMAT.useUrl ? "URL linking on — click to disable" : "URL linking off — click to enable";
+      tog.addEventListener("click", e => {
+        e.stopPropagation();
+        FORMAT.useUrl = !FORMAT.useUrl;
+        renderFormatBar(); generate();
+      });
+      chip.appendChild(tog);
+    }
+    chip.addEventListener("click", () => {
+      const hi = FORMAT.hidden.indexOf(id);
+      if (hi >= 0) FORMAT.hidden.splice(hi, 1); else FORMAT.hidden.push(id);
+      renderFormatBar(); generate();
+    });
+    chip.addEventListener("dragstart", e => {
+      dragSrcIdx = idx;
+      e.dataTransfer.effectAllowed = "move";
+      setTimeout(() => chip.classList.add("dragging"), 0);
+    });
+    chip.addEventListener("dragend",  () => chip.classList.remove("dragging"));
+    chip.addEventListener("dragover",  e => { e.preventDefault(); chip.classList.add("drag-over"); });
+    chip.addEventListener("dragleave", () => chip.classList.remove("drag-over"));
+    chip.addEventListener("drop", e => {
+      e.preventDefault();
+      chip.classList.remove("drag-over");
+      if (dragSrcIdx === null || dragSrcIdx === idx) return;
+      const moved = FORMAT.order.splice(dragSrcIdx, 1)[0];
+      FORMAT.order.splice(idx, 0, moved);
+      renderFormatBar(); generate();
+    });
+    container.appendChild(chip);
+  });
+}
+
+function render() {
+  const list = document.getElementById("gameList");
+  list.innerHTML = "";
+  GAMES.forEach((g, i) => list.appendChild(createCard(g, i)));
+}
+
+function setAll(val) {
+  checked.fill(val);
+  render();
+  generate();
+}
+
+function addGame() {
+  GAMES.push({ name:"", url:"", emoji:"", players:"", time:"", weight:"", desc:"" });
+  checked.push(true);
+  render();
+  const cards = document.querySelectorAll(".game-card");
+  const last = cards[cards.length - 1];
+  if (last) last.querySelector("[data-field='name']").focus();
+}
+
+function generateLine(g) {
+  const parts = FORMAT.order
+    .filter(id => !FORMAT.hidden.includes(id))
+    .map(id => COLUMNS.find(c => c.id === id).render(g));
+  return parts.join(` ${FORMAT.sep} `);
+}
+
+function updateFormatPreview() {
+  const el = document.getElementById("formatPreview");
+  const sample = GAMES.find(g => g.name.trim());
+  if (!sample) { el.textContent = "(add a game to see preview)"; el.classList.remove("live"); return; }
+  el.textContent = generateLine(sample);
+  el.classList.add("live");
+}
+
+function generate() {
+  updateFormatPreview();
+  const lines = GAMES
+    .filter((_, i) => checked[i])
+    .filter(g => g.name.trim())
+    .map(generateLine);
+
+  document.getElementById("output").value = lines.length
+    ? "!lfg one of the following:\n\n*Can teach 'em all:*\n\n" + lines.join("\n\n")
+    : "(No games selected)";
+}
+
+function copyOutput() {
+  const ta = document.getElementById("output");
+  if (!ta.value || ta.value === "(No games selected)") return;
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const btn = document.getElementById("copyBtn");
+    btn.textContent = "Copied!";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1800);
+  });
+}
+
+// ── BGG Research ──────────────────────────────────────────────────────────────
+
+async function bggFetch(url) {
+  const attempts = [
+    url,                                                                      // direct — no proxy
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,         // allorigins
+    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,                  // corsproxy
+  ];
+  for (const target of attempts) {
+    try {
+      const res = await fetch(target);
+      if (!res.ok) continue;
+      const doc = new DOMParser().parseFromString(await res.text(), "text/xml");
+      if (!doc.querySelector("parsererror")) return doc;
+    } catch {}
+  }
+  throw new Error("Could not reach BGG — all connection methods failed.");
+}
+
+function bggFormatTime(min) {
+  const m = parseInt(min) || 0;
+  if (!m) return "";
+  if (m < 60) return `~${m}m`;
+  const h = Math.round(m / 30) / 2;   // round to nearest 0.5 h
+  return `~${h % 1 === 0 ? h : h}h`;
+}
+
+function openBggModal() {
+  document.getElementById("bggModal").classList.remove("hidden");
+  document.getElementById("bggFileWarning").classList.toggle("hidden", location.protocol !== "file:");
+  document.getElementById("bggQuery").value = "";
+  document.getElementById("bggUrlInput").value = "";
+  document.getElementById("bggResults").innerHTML = "";
+  document.getElementById("bggQuery").focus();
+}
+
+async function addByBggUrl() {
+  const raw = document.getElementById("bggUrlInput").value.trim();
+  const m   = raw.match(/boardgamegeek\.com\/boardgame\/(\d+)\/?([^/?#]*)?/);
+  if (!m) { bggStatus("No BGG game ID found in that URL.", "bgg-err"); return; }
+  const id       = m[1];
+  const slug     = m[2] || "";
+  const slugName = slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  const url      = `https://boardgamegeek.com/boardgame/${id}/${slug}`;
+
+  if (location.protocol === "file:") {
+    GAMES.push({ name: slugName || "Unknown", url, emoji:"", players:"", time:"", weight:"", desc:"" });
+    checked.push(true);
+    closeBggModal();
+    render();
+    generate();
+    const cards = document.querySelectorAll(".game-card");
+    cards[cards.length - 1]?.querySelector("[data-field='players']")?.focus();
+    return;
+  }
+
+  await selectBggGame(id, slugName || "Unknown");
+}
+
+function closeBggModal() {
+  document.getElementById("bggModal").classList.add("hidden");
+}
+
+function bggStatus(msg, cls = "bgg-status") {
+  document.getElementById("bggResults").innerHTML = `<div class="${cls}">${msg}</div>`;
+}
+
+async function runBggSearch() {
+  const query = document.getElementById("bggQuery").value.trim();
+  if (!query) return;
+  bggStatus("Searching…");
+  try {
+    const doc = await bggFetch(
+      `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`
+    );
+    const items = Array.from(doc.querySelectorAll("item")).slice(0, 7).map(el => ({
+      id:   el.getAttribute("id"),
+      name: el.querySelector("name[type='primary']")?.getAttribute("value") ?? "Unknown",
+      year: el.querySelector("yearpublished")?.getAttribute("value") ?? "?"
+    }));
+    if (!items.length) { bggStatus("No results found."); return; }
+    const box = document.getElementById("bggResults");
+    box.innerHTML = "";
+    items.forEach(item => {
+      const btn = document.createElement("button");
+      btn.className = "bgg-result";
+      btn.innerHTML = `<strong>${item.name}</strong> <span class="bgg-year">(${item.year})</span>`;
+      btn.addEventListener("click", () => selectBggGame(item.id, item.name));
+      box.appendChild(btn);
+    });
+  } catch (e) {
+    bggStatus(`Could not reach BGG: ${e.message}`, "bgg-err");
+  }
+}
+
+async function selectBggGame(id, fallbackName) {
+  bggStatus("Fetching details…");
+  try {
+    const doc = await bggFetch(
+      `https://boardgamegeek.com/xmlapi2/thing?id=${id}&stats=1`
+    );
+    const el   = doc.querySelector("item");
+    const name = el.querySelector("name[type='primary']")?.getAttribute("value") ?? fallbackName;
+    const minP = el.querySelector("minplayers")?.getAttribute("value") ?? "1";
+    const maxP = el.querySelector("maxplayers")?.getAttribute("value") ?? "?";
+    const time = el.querySelector("playingtime")?.getAttribute("value")  ?? "0";
+    const wRaw = el.querySelector("averageweight")?.getAttribute("value") ?? "0";
+    const players = minP === maxP ? `${minP}p` : `${minP}-${maxP}p`;
+    const weight  = parseFloat(wRaw).toFixed(1);
+    const slug    = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/, "");
+    const url     = `https://boardgamegeek.com/boardgame/${id}/${slug}`;
+    GAMES.push({ name, url, emoji:"", players, time: bggFormatTime(time), weight, desc:"" });
+    checked.push(true);
+    closeBggModal();
+    render();
+    generate();
+    const cards = document.querySelectorAll(".game-card");
+    cards[cards.length - 1]?.querySelector("[data-field='emoji']")?.focus();
+  } catch (e) {
+    bggStatus(`Failed to load details: ${e.message}`, "bgg-err");
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
+loadData();
+render();
+renderFormatBar();
+document.getElementById("sepInput").addEventListener("input", function() {
+  FORMAT.sep = this.value;
+  generate();
+});
+generate();
+</script>
+
+
+</body></html>
