@@ -655,8 +655,6 @@ const DEFAULTS = [
   { name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
   { name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
 ];
-const DEFAULT_CHECKED = [true,true,true,true,true,true,true,true,true,true,true];
-
 const COLUMNS = [
   { id:"icon",    label:"Icon",    render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
   { id:"name",    label:"Name",    render: g => FORMAT.useUrl && g.url.trim() ? `[**${g.name}**](${g.url})` : `**${g.name}**` },
@@ -673,16 +671,18 @@ let GAME_DRAG_IDX = null;
 const BUILD_DATE  = "2026-05-16";
 const STORAGE_KEY = "lfg_saved_v3";
 let INTRO = "one of the following:\n\n*Can teach 'em all:*";
-const GAMES   = [];
-const checked = [];
+const GAMES = [];
 
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const s = JSON.parse(raw);
-      GAMES.splice(0, GAMES.length, ...s.games);
-      checked.splice(0, checked.length, ...s.checked);
+      // migrate: old saves had a separate `checked` array
+      const oldChecked = Array.isArray(s.checked) ? s.checked : [];
+      GAMES.splice(0, GAMES.length, ...s.games.map((g, i) => ({
+        ...g, checked: g.checked !== undefined ? g.checked !== false : (oldChecked[i] !== false)
+      })));
       if (s.format) {
         FORMAT.sep    = s.format.sep    ?? "┃";
         FORMAT.order  = s.format.order  ?? ["icon","name","players","time","weight","desc"];
@@ -694,13 +694,12 @@ function loadData() {
       return;
     }
   } catch {}
-  GAMES.splice(0, GAMES.length, ...DEFAULTS.map((g, i) => ({ ...g, _defaultIdx: i })));
-  checked.splice(0, checked.length, ...GAMES.map((_, i) => DEFAULT_CHECKED[i] !== false));
+  GAMES.splice(0, GAMES.length, ...DEFAULTS.map((g, i) => ({ ...g, _defaultIdx: i, checked: g.checked !== false })));
 }
 
 function persistData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    games: GAMES, checked: [...checked], intro: INTRO,
+    games: GAMES, intro: INTRO,
     format: { sep: FORMAT.sep, order: [...FORMAT.order], hidden: [...FORMAT.hidden], useUrl: FORMAT.useUrl, wrap: FORMAT.wrap }
   }));
 }
@@ -720,17 +719,17 @@ function resetDefaults() {
 function bakeDefaults() {
   if (!confirm("Write current game list and format settings into the file as new hardcoded defaults?\n\nThis downloads an updated ttsclub_lfg.html — replace your current file with it.")) return;
   const FIELDS = ["name","url","emoji","players","time","weight","desc"];
-  const lines = GAMES.map(g =>
-    `  { ${FIELDS.map(f => `${f}:${JSON.stringify(g[f] || "")}`).join(", ")} }`
-  );
+  const lines = GAMES.map(g => {
+    const fields = FIELDS.map(f => `${f}:${JSON.stringify(g[f] || "")}`);
+    fields.push(`checked:${g.checked !== false}`);
+    return `  { ${fields.join(", ")} }`;
+  });
   const newDefaults = `const DEFAULTS = [\n${lines.join(",\n")},\n];`;
   const newFormat = `const FORMAT = ${JSON.stringify({ sep:FORMAT.sep, order:[...FORMAT.order], hidden:[...FORMAT.hidden], useUrl:FORMAT.useUrl, wrap:FORMAT.wrap })};`;
   const newKey = STORAGE_KEY.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`);
   const today = new Date().toISOString().slice(0, 10);
   let html = document.documentElement.outerHTML;
-  const newDefaultChecked = `const DEFAULT_CHECKED = [${checked.map(c => String(c)).join(",")}];`;
   html = html.replace(/const DEFAULTS = \[[\s\S]*?\n\];/, newDefaults);
-  html = html.replace(/const DEFAULT_CHECKED = \[[^\]]*\];/, newDefaultChecked);
   html = html.replace(/const FORMAT = \{.*?\};/, newFormat);
   html = html.replace(/const BUILD_DATE\s*=\s*"[^"]*"/, `const BUILD_DATE  = "${today}"`);
   html = html.replace(/let INTRO = "(?:[^"\\]|\\.)*"/, () => `let INTRO = ${JSON.stringify(INTRO)}`);
@@ -748,7 +747,7 @@ function esc(s) { return (s || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;");
 
 function createCard(g, i) {
   const card = document.createElement("div");
-  card.className = "game-card" + (checked[i] ? "" : " unchecked");
+  card.className = "game-card" + (g.checked !== false ? "" : " unchecked");
   card.dataset.index = i;
 
   const inp = (field, val, ph) =>
@@ -758,7 +757,7 @@ function createCard(g, i) {
   card.innerHTML = `
     <div class="row-grid card-top">
       <span class="card-drag-handle" title="Drag to reorder">⠿</span>
-      <input type="checkbox" ${checked[i] ? "checked" : ""}>
+      <input type="checkbox" ${g.checked !== false ? "checked" : ""}>
       ${inp("name",    g.name,    "Game name")}
       ${inp("emoji",   g.emoji,   ":emoji:")}
       ${inp("players", g.players, "3-6p")}
@@ -791,8 +790,7 @@ function createCard(g, i) {
     e.preventDefault(); card.classList.remove("drag-over");
     if (GAME_DRAG_IDX === null || GAME_DRAG_IDX === i) return;
     const [g] = GAMES.splice(GAME_DRAG_IDX, 1);
-    const [c] = checked.splice(GAME_DRAG_IDX, 1);
-    GAMES.splice(i, 0, g); checked.splice(i, 0, c);
+    GAMES.splice(i, 0, g);
     GAME_DRAG_IDX = null;
     render(); persistData(); generate();
   });
@@ -822,8 +820,9 @@ function createCard(g, i) {
   pickerBtn.addEventListener("click", e => { e.stopPropagation(); popup.classList.toggle("hidden"); });
 
   card.querySelector("input[type=checkbox]").addEventListener("change", function() {
-    checked[i] = this.checked;
+    GAMES[i].checked = this.checked;
     card.classList.toggle("unchecked", !this.checked);
+    persistData();
     generate();
   });
 
@@ -853,7 +852,6 @@ function createCard(g, i) {
     const label = GAMES[i].name.trim() || "this game";
     if (!confirm(`Remove "${label}" from the list?`)) return;
     GAMES.splice(i, 1);
-    checked.splice(i, 1);
     render();
     persistData();
   });
@@ -941,14 +939,14 @@ function render() {
 }
 
 function setAll(val) {
-  checked.fill(val);
+  GAMES.forEach(g => { g.checked = val; });
+  persistData();
   render();
   generate();
 }
 
 function addGame() {
-  GAMES.push({ name:"", url:"", emoji:"", players:"", time:"", weight:"", desc:"" });
-  checked.push(true);
+  GAMES.push({ name:"", url:"", emoji:"", players:"", time:"", weight:"", desc:"", checked: true });
   render();
   const cards = document.querySelectorAll(".game-card");
   const last = cards[cards.length - 1];
@@ -1030,7 +1028,7 @@ function updateFormatPreview() {
 function generate() {
   updateFormatPreview();
   const lines = GAMES
-    .filter((_, i) => checked[i])
+    .filter(g => g.checked !== false)
     .filter(g => g.name.trim())
     .map(generateLine);
 
