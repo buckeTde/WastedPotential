@@ -18,7 +18,7 @@
     /* ── Column grid shared by header + every row ── */
     .row-grid {
       display: grid;
-      grid-template-columns: 22px 1.6fr 90px 68px 68px 58px 3fr 26px 26px 26px;
+      grid-template-columns: 14px 22px 1.6fr 90px 68px 68px 58px 3fr 26px 26px 26px;
       gap: 6px;
       align-items: center;
     }
@@ -89,6 +89,15 @@
     }
     input[type="text"]:focus { border-color: #5865f2; background: #16171a; }
     input[type="text"]::placeholder { color: #4e5058; }
+
+    /* Drag handle on game cards */
+    .card-drag-handle {
+      color: #4e5058; font-size: 0.9rem; cursor: grab;
+      user-select: none; line-height: 1; text-align: center;
+    }
+    .card-drag-handle:hover { color: #72767d; }
+    .game-card.dragging  { opacity: 0.3; }
+    .game-card.drag-over { border-color: #5865f2; background: #20223a; }
 
     /* Icon buttons (save / revert / trash) */
     .save-btn, .revert-btn, .trash-btn {
@@ -226,7 +235,7 @@
     .col-chip.drag-over { border-color: #5865f2; background: #2e3157; }
     .drag-handle { color: #4e5058; font-size: 0.85rem; }
     .wrap-input {
-      width: 24px;
+      width: 36px;
       background: #1a1b1e;
       border: 1px solid #3f4147;
       border-radius: 3px;
@@ -281,6 +290,7 @@
 
 <!-- Column header -->
 <div class="row-grid col-header">
+  <span></span>
   <span></span>
   <span>Name</span>
   <span>Icon</span>
@@ -489,13 +499,15 @@ const DEFAULTS = [
 const COLUMNS = [
   { id:"icon",    label:"Icon",    render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
   { id:"name",    label:"Name",    render: g => FORMAT.useUrl && g.url.trim() ? `[**${g.name}**](${g.url})` : `**${g.name}**` },
-  { id:"players", label:"Players", render: g => `${FORMAT.wrap.players?.pre??""}${g.players}${FORMAT.wrap.players?.suf??""}` },
-  { id:"time",    label:"Time",        render: g => `*${g.time.startsWith("~") ? g.time : "~"+g.time}*` },
-  { id:"weight",  label:"Weight",      render: g => `*w: ${g.weight}/5*` },
-  { id:"desc",    label:"Description", render: g => g.desc },
+  { id:"players", label:"Players",     render: g => `${FORMAT.wrap.players?.pre??""}${g.players}${FORMAT.wrap.players?.suf??""}` },
+  { id:"time",    label:"Time",        render: g => { const t = g.time.startsWith("~") ? g.time : "~"+g.time; return `${FORMAT.wrap.time?.pre??"*"}${t}${FORMAT.wrap.time?.suf??"*"}`; }},
+  { id:"weight",  label:"Weight",      render: g => `${FORMAT.wrap.weight?.pre??"*w: "}${g.weight}${FORMAT.wrap.weight?.suf??"/5*"}` },
+  { id:"desc",    label:"Description", render: g => `${FORMAT.wrap.desc?.pre??""}${g.desc}${FORMAT.wrap.desc?.suf??""}` },
 ];
 
-const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"[ ", suf:" ]" }, players:{ pre:"", suf:"" } } };
+const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"[ ", suf:" ]" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } } };
+const DEFAULT_WRAP = { icon:{ pre:"[ ", suf:" ]" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } };
+let GAME_DRAG_IDX = null;
 
 const STORAGE_KEY = "lfg_saved_v3";
 const GAMES   = [];
@@ -513,7 +525,7 @@ function loadData() {
         FORMAT.order  = s.format.order  ?? ["icon","name","players","time","weight","desc"];
         FORMAT.hidden = s.format.hidden ?? [];
         FORMAT.useUrl = s.format.useUrl ?? true;
-        FORMAT.wrap   = s.format.wrap   ?? { icon:{ pre:"[ ", suf:" ]" }, players:{ pre:"", suf:"" } };
+        FORMAT.wrap   = Object.assign({}, DEFAULT_WRAP, s.format.wrap ?? {});
       }
       return;
     }
@@ -533,7 +545,7 @@ function resetDefaults() {
   if (!confirm("Discard all saved changes and restore defaults?")) return;
   localStorage.removeItem(STORAGE_KEY);
   FORMAT.sep = "┃"; FORMAT.order = ["icon","name","players","time","weight","desc"]; FORMAT.hidden = []; FORMAT.useUrl = true;
-  FORMAT.wrap = { icon:{ pre:"[ ", suf:" ]" }, players:{ pre:"", suf:"" } };
+  FORMAT.wrap = { ...DEFAULT_WRAP };
   loadData();
   render();
   renderFormatBar();
@@ -572,8 +584,10 @@ function createCard(g, i) {
   const inp = (field, val, ph) =>
     `<input type="text" data-field="${field}" value="${esc(val)}" placeholder="${ph}">`;
 
+  card.draggable = true;
   card.innerHTML = `
     <div class="row-grid card-top">
+      <span class="card-drag-handle" title="Drag to reorder">⠿</span>
       <input type="checkbox" ${checked[i] ? "checked" : ""}>
       ${inp("name",    g.name,    "Game name")}
       ${inp("emoji",   g.emoji,   ":emoji:")}
@@ -591,6 +605,28 @@ function createCard(g, i) {
       <span class="url-label">BGG URL</span>
     </div>
   `;
+
+  let dragFromHandle = false;
+  card.querySelector(".card-drag-handle").addEventListener("mousedown", () => { dragFromHandle = true; });
+  document.addEventListener("mouseup", () => { dragFromHandle = false; });
+  card.addEventListener("dragstart", e => {
+    if (!dragFromHandle) { e.preventDefault(); return; }
+    GAME_DRAG_IDX = i;
+    e.dataTransfer.effectAllowed = "move";
+    setTimeout(() => card.classList.add("dragging"), 0);
+  });
+  card.addEventListener("dragend", () => { card.classList.remove("dragging"); dragFromHandle = false; });
+  card.addEventListener("dragover", e => { e.preventDefault(); if (GAME_DRAG_IDX !== null && GAME_DRAG_IDX !== i) card.classList.add("drag-over"); });
+  card.addEventListener("dragleave", () => card.classList.remove("drag-over"));
+  card.addEventListener("drop", e => {
+    e.preventDefault(); card.classList.remove("drag-over");
+    if (GAME_DRAG_IDX === null || GAME_DRAG_IDX === i) return;
+    const [g] = GAMES.splice(GAME_DRAG_IDX, 1);
+    const [c] = checked.splice(GAME_DRAG_IDX, 1);
+    GAMES.splice(i, 0, g); checked.splice(i, 0, c);
+    GAME_DRAG_IDX = null;
+    render(); persistData(); generate();
+  });
 
   card.querySelector("input[type=checkbox]").addEventListener("change", function() {
     checked[i] = this.checked;
@@ -660,19 +696,13 @@ function renderFormatBar() {
     handle.className = "drag-handle"; handle.textContent = "⠿";
     chip.appendChild(handle);
 
-    const hasWrap = ["icon","players"].includes(id);
-    if (hasWrap) {
-      const w = FORMAT.wrap[id] || { pre:"", suf:"" };
-      chip.appendChild(makeWrapInput(w.pre, "Prefix — shown before the value", v => { (FORMAT.wrap[id] ??= {}).pre = v; generate(); }));
-    }
+    const w = FORMAT.wrap[id] || { pre:"", suf:"" };
+    chip.appendChild(makeWrapInput(w.pre, "Prefix before value", v => { (FORMAT.wrap[id] ??= {}).pre = v; generate(); }));
 
     const lbl = document.createElement("span"); lbl.textContent = col.label;
     chip.appendChild(lbl);
 
-    if (hasWrap) {
-      const w = FORMAT.wrap[id] || { pre:"", suf:"" };
-      chip.appendChild(makeWrapInput(w.suf, "Suffix — shown after the value", v => { (FORMAT.wrap[id] ??= {}).suf = v; generate(); }));
-    }
+    chip.appendChild(makeWrapInput(w.suf, "Suffix after value", v => { (FORMAT.wrap[id] ??= {}).suf = v; generate(); }));
 
     if (id === "name") {
       const tog = document.createElement("span");
@@ -739,12 +769,21 @@ function generateLine(g) {
   return parts.join(` ${FORMAT.sep} `);
 }
 
+const EMOJI_MAP = {
+  black_joker:"🃏",moyai:"🗿",cityscape:"🌆",classical_building:"🏛️",anchor:"⚓",
+  bow_and_arrow:"🏹",snake:"🐍",fog:"🌫️",pick:"⛏️",dragon:"🐉",skull:"💀",
+  moneybag:"💰",sword:"⚔️",shield:"🛡️",detective:"🕵️",brain:"🧠",rocket:"🚀",
+  chess_pawn:"♟️",gem:"💎",wolf:"🐺",farmer:"🧑‍🌾",trophy:"🏆",fire:"🔥",
+  star:"⭐",zap:"⚡",crown:"👑",ghost:"👻",bomb:"💣",key:"🔑",crystal_ball:"🔮",
+};
+
 function discordMd(s) {
   const bi = t => t
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g,     "<em>$1</em>");
   return s
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/:([a-z0-9_]+):/g, (_, name) => EMOJI_MAP[name] ?? "🎲")
     .replace(/\[([^\]]*)\]\(([^)]*)\)/g, (_, label, url) =>
       `<a href="${url}" target="_blank" style="color:#00aff4;text-decoration:none">${bi(label)}</a>`)
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
