@@ -994,7 +994,15 @@ async function selectBggGame(id, fallbackName) {
     const cards = document.querySelectorAll(".game-card");
     cards[cards.length - 1]?.querySelector("[data-field='emoji']")?.focus();
   } catch (e) {
-    bggStatus(`Failed to load details: ${e.message}`, "bgg-err");
+    // Proxies all failed — add a stub so the user can fill in the missing fields
+    const slug = fallbackName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/, "");
+    GAMES.push({ name: fallbackName, url: `https://boardgamegeek.com/boardgame/${id}/${slug}`, emoji:"", players:"", time:"", weight:"", desc:"" });
+    checked.push(true);
+    closeBggModal();
+    render();
+    generate();
+    const cards = document.querySelectorAll(".game-card");
+    cards[cards.length - 1]?.querySelector("[data-field='players']")?.focus();
   }
 }
 
