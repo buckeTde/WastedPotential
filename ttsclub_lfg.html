@@ -906,12 +906,12 @@ function renderFormatBar() {
     chip.appendChild(handle);
 
     const w = FORMAT.wrap[id] || { pre:"", suf:"" };
-    chip.appendChild(makeWrapInput(w.pre, "Prefix before value", v => { (FORMAT.wrap[id] ??= {}).pre = v; generate(); }));
+    chip.appendChild(makeWrapInput(w.pre, "Prefix before value", v => { FORMAT.wrap[id] = { ...(FORMAT.wrap[id] ?? {}), pre: v }; generate(); }));
 
     const lbl = document.createElement("span"); lbl.textContent = col.label;
     chip.appendChild(lbl);
 
-    chip.appendChild(makeWrapInput(w.suf, "Suffix after value", v => { (FORMAT.wrap[id] ??= {}).suf = v; generate(); }));
+    chip.appendChild(makeWrapInput(w.suf, "Suffix after value", v => { FORMAT.wrap[id] = { ...(FORMAT.wrap[id] ?? {}), suf: v }; generate(); }));
 
     if (id === "name") {
       const tog = document.createElement("span");
