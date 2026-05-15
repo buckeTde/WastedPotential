@@ -189,7 +189,12 @@
     }
     textarea:focus { border-color: #5865f2; }
 
-    .footer { margin-top: 12px; font-size: 0.72rem; color: #4e5058; }
+    .footer {
+      margin-top: 12px; font-size: 0.72rem; color: #4e5058;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer a { color: #72767d; text-decoration: none; transition: color 0.12s; }
+    .footer a:hover { color: #dcddde; }
 
     /* ── Format bar ── */
     .format-bar {
@@ -486,22 +491,25 @@
     </div>
   </div></div>
 
-<p class="footer">ttsclub_lfg.html — keep in sync with ttsclub_lfg.txt</p>
+<p class="footer">
+  <span>ttsclub_lfg.html — keep in sync with ttsclub_lfg.txt</span>
+  <span>by <a href="https://steamcommunity.com/id/buckeT_de/" target="_blank" rel="noopener">buckeT.de</a></span>
+</p>
 
 
 <script>
-// Hardcoded defaults — updated by Claude when adding/editing games
+// Hardcoded defaults
 const DEFAULTS = [
   { name:"The Gang", url:"https://boardgamegeek.com/boardgame/411567/the-gang", emoji:":black_joker:", players:"3-10p", time:"~20m", weight:"1.7", desc:"Co-op Poker Heist — bet on your hand together without saying a word!" },
-  { name:"Ship Show", url:"https://boardgamegeek.com/boardgame/378832/ship-show", emoji:":ship:", players:"3-8p", time:"~20m", weight:"1.1", desc:"Party Voting Game — ship it or skip it, split the group every time!" },
   { name:"Hitster Bingo", url:"https://boardgamegeek.com/boardgame/383147/hitster-bingo", emoji:":musical_note:", players:"2-10p", time:"~30m", weight:"1.0", desc:"Music Bingo — recognize the hit, mark your card, shout BINGO!" },
+  { name:"Ship Show", url:"https://boardgamegeek.com/boardgame/378832/ship-show", emoji:":ship:", players:"3-8p", time:"~20m", weight:"1.1", desc:"Party Voting Game — ship it or skip it, split the group every time!" },
   { name:"Anno 1800", url:"https://boardgamegeek.com/boardgame/311193/anno-1800-the-board-game", emoji:":cityscape:", players:"3-4p", time:"~2h", weight:"3.1", desc:"Worker Placement City Engine Builder — industrialize faster than your rivals!" },
   { name:"Tapestry", url:"https://boardgamegeek.com/boardgame/286096/tapestry", emoji:":classical_building:", players:"3-5p", time:"~2h", weight:"2.9", desc:"Asymmetric Civ Builder — advance through science, military and exploration to glory!" },
-  { name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
   { name:"Sheriff of Nottingham", url:"https://boardgamegeek.com/boardgame/157969/sheriff-of-nottingham", emoji:":bow_and_arrow:", players:"3-5p", time:"~60m", weight:"2.0", desc:"Bluffing & Bribery Card Game — smuggle goods past the Sheriff!" },
   { name:"Cryptid", url:"https://boardgamegeek.com/boardgame/246784/cryptid", emoji:":snake:", players:"3-5p", time:"~50m", weight:"2.2", desc:"Competitive Deduction — share clues, eliminate locations, catch the creature first!" },
   { name:"Whitehall Mystery", url:"https://boardgamegeek.com/boardgame/215312/whitehall-mystery", emoji:":fog:", players:"2-4p", time:"~60m", weight:"2.3", desc:"Hidden Movement Thriller — hunt Jack the Ripper through the foggy streets of London!" },
   { name:"Terraria: The Board Game", url:"https://boardgamegeek.com/boardgame/391286/terraria-the-board-game", emoji:":pick:", players:"3-4p", time:"~2h", weight:"2.5", desc:"Co-op Deckbuilding Adventure — dig, fight, explore and build together!" },
+  { name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
   { name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
 ];
 
