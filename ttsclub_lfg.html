@@ -177,74 +177,6 @@
 
     .footer { margin-top: 9px; font-size: 0.72rem; color: #4e5058; }
 
-    /* ── BGG Research button ── */
-    .btn-bgg {
-      background: transparent;
-      border: 1px solid #5865f2;
-      color: #5865f2;
-      padding: 6px 12px;
-      font-size: 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.12s;
-    }
-    .btn-bgg:hover { background: #2e3157; }
-
-    /* ── BGG modal ── */
-    .bgg-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.75);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 100;
-    }
-    .bgg-overlay.hidden { display: none; }
-    .bgg-box {
-      background: #2b2d31;
-      border: 1px solid #3f4147;
-      border-radius: 10px;
-      padding: 24px;
-      width: 400px;
-      max-width: 92vw;
-    }
-    .bgg-box h2 { font-size: 1rem; font-weight: 600; color: #fff; margin-bottom: 14px; }
-    .bgg-row { display: flex; gap: 8px; margin-bottom: 12px; }
-    .bgg-input {
-      flex: 1;
-      background: #1e1f22; border: 1px solid #2e3036; border-radius: 5px;
-      color: #dcddde; font-size: 0.85rem; padding: 7px 10px; outline: none;
-    }
-    .bgg-input:focus { border-color: #5865f2; }
-    .bgg-results { display: flex; flex-direction: column; gap: 4px; min-height: 20px; }
-    .bgg-result {
-      background: #1e1f22; border: 1px solid #2e3036; border-radius: 5px;
-      color: #dcddde; font-size: 0.84rem; padding: 8px 10px;
-      text-align: left; cursor: pointer;
-      transition: border-color 0.12s, background 0.12s;
-    }
-    .bgg-result:hover { border-color: #5865f2; background: #2e3157; }
-    .bgg-year { color: #72767d; font-size: 0.78rem; font-weight: normal; }
-    .bgg-status { color: #72767d; font-size: 0.82rem; padding: 6px 0; }
-    .bgg-err   { color: #ed4245; font-size: 0.82rem; padding: 6px 0; }
-    .bgg-footer { margin-top: 12px; }
-    .bgg-warning {
-      background: #2e2412; border: 1px solid #faa61a; border-radius: 6px;
-      padding: 10px 12px; font-size: 0.79rem; color: #faa61a;
-      margin-bottom: 12px; line-height: 1.65;
-    }
-    .bgg-warning code {
-      background: #1a1310; padding: 1px 5px; border-radius: 3px;
-      font-family: "Consolas", monospace; font-size: 0.78rem;
-    }
-    .bgg-sep {
-      text-align: center; color: #4e5058; font-size: 0.72rem;
-      margin: 12px 0; position: relative;
-    }
-    .bgg-sep::before, .bgg-sep::after {
-      content: ""; position: absolute; top: 50%;
-      width: 36%; height: 1px; background: #3f4147;
-    }
-    .bgg-sep::before { left: 0; } .bgg-sep::after { right: 0; }
-
     /* ── Format bar ── */
     .format-bar {
       background: #2b2d31;
@@ -529,7 +461,6 @@
   <button class="btn-ghost" onclick="setAll(true)">All</button>
   <button class="btn-ghost" onclick="setAll(false)">None</button>
   <button class="btn-add" onclick="addGame()">+ Add Game</button>
-  <button class="btn-bgg" onclick="openBggModal()">🔍 Research Game</button>
   <div class="spacer"></div>
   <button class="btn-ghost" onclick="resetDefaults()" title="Discard all saved changes and reload defaults">Reset defaults</button>
   <button class="btn-ghost" onclick="bakeDefaults()" title="Write current list into the file as new hardcoded defaults">Bake to defaults ↓</button>
@@ -540,36 +471,6 @@
 <textarea id="output" readonly="" placeholder="Click Generate to build the !lfg command..."></textarea>
 <p class="footer">ttsclub_lfg.html — keep in sync with ttsclub_lfg.txt</p>
 
-<div id="bggModal" class="bgg-overlay hidden">
-  <div class="bgg-box">
-    <h2>Research on BoardGameGeek</h2>
-
-    <div id="bggFileWarning" class="bgg-warning hidden">
-      ⚠ <strong>Browser blocks external requests from local files.</strong><br>
-      Search is unavailable. Paste a BGG URL below to add a game stub — fill in players, time and weight manually.<br>
-      For full auto-fill, serve from a local server: <code>python -m http.server 8000</code>
-    </div>
-
-    <div class="bgg-row">
-      <input type="text" id="bggQuery" class="bgg-input" placeholder="Game name…"
-             onkeydown="if(event.key==='Enter') runBggSearch()">
-      <button class="ui-btn btn-primary" onclick="runBggSearch()">Search</button>
-    </div>
-    <div id="bggResults" class="bgg-results"></div>
-
-    <div class="bgg-sep">or paste a BGG URL</div>
-    <div class="bgg-row">
-      <input type="text" id="bggUrlInput" class="bgg-input"
-             placeholder="https://boardgamegeek.com/boardgame/246784/cryptid"
-             onkeydown="if(event.key==='Enter') addByBggUrl()">
-      <button class="ui-btn btn-primary" onclick="addByBggUrl()">Add</button>
-    </div>
-
-    <div class="bgg-footer">
-      <button class="btn-ghost" onclick="closeBggModal()">Cancel</button>
-    </div>
-  </div>
-</div>
 
 <script>
 // Hardcoded defaults — updated by Claude when adding/editing games
@@ -868,147 +769,6 @@ function copyOutput() {
     setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1800);
   });
 }
-
-// ── BGG Research ──────────────────────────────────────────────────────────────
-
-async function bggFetch(url) {
-  const enc = encodeURIComponent(url);
-  const attempts = [
-    `https://ttsclublfg.report-e15.workers.dev/?url=${enc}`,
-    url,
-    `https://api.allorigins.win/raw?url=${enc}`,
-    `https://corsproxy.io/?${enc}`,
-    `https://api.codetabs.com/v1/proxy?quest=${enc}`,
-    `https://thingproxy.freeboard.io/fetch/${url}`,
-  ];
-  const errs = [];
-  for (const target of attempts) {
-    try {
-      const res = await fetch(target, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) { errs.push(`HTTP ${res.status}`); continue; }
-      const text = await res.text();
-      const doc = new DOMParser().parseFromString(text, "text/xml");
-      if (!doc.querySelector("parsererror")) return doc;
-      errs.push("parse error");
-    } catch (e) { errs.push(e.message?.split(":")[0] ?? "fail"); }
-  }
-  throw new Error(`Could not reach BGG (tried ${attempts.length} routes: ${errs.join(", ")})`);
-}
-
-function bggFormatTime(min) {
-  const m = parseInt(min) || 0;
-  if (!m) return "";
-  if (m < 60) return `~${m}m`;
-  const h = Math.round(m / 30) / 2;   // round to nearest 0.5 h
-  return `~${h % 1 === 0 ? h : h}h`;
-}
-
-function openBggModal() {
-  document.getElementById("bggModal").classList.remove("hidden");
-  document.getElementById("bggFileWarning").classList.toggle("hidden", location.protocol !== "file:");
-  document.getElementById("bggQuery").value = "";
-  document.getElementById("bggUrlInput").value = "";
-  document.getElementById("bggResults").innerHTML = "";
-  document.getElementById("bggQuery").focus();
-}
-
-async function addByBggUrl() {
-  const raw = document.getElementById("bggUrlInput").value.trim();
-  const m   = raw.match(/boardgamegeek\.com\/boardgame\/(\d+)\/?([^/?#]*)?/);
-  if (!m) { bggStatus("No BGG game ID found in that URL.", "bgg-err"); return; }
-  const id       = m[1];
-  const slug     = m[2] || "";
-  const slugName = slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-  const url      = `https://boardgamegeek.com/boardgame/${id}/${slug}`;
-
-  if (location.protocol === "file:") {
-    GAMES.push({ name: slugName || "Unknown", url, emoji:"", players:"", time:"", weight:"", desc:"" });
-    checked.push(true);
-    closeBggModal();
-    render();
-    generate();
-    const cards = document.querySelectorAll(".game-card");
-    cards[cards.length - 1]?.querySelector("[data-field='players']")?.focus();
-    return;
-  }
-
-  await selectBggGame(id, slugName || "Unknown");
-}
-
-function closeBggModal() {
-  document.getElementById("bggModal").classList.add("hidden");
-}
-
-function bggStatus(msg, cls = "bgg-status") {
-  document.getElementById("bggResults").innerHTML = `<div class="${cls}">${msg}</div>`;
-}
-
-async function runBggSearch() {
-  const query = document.getElementById("bggQuery").value.trim();
-  if (!query) return;
-  bggStatus("Searching…");
-  try {
-    const doc = await bggFetch(
-      `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`
-    );
-    const items = Array.from(doc.querySelectorAll("item")).slice(0, 7).map(el => ({
-      id:   el.getAttribute("id"),
-      name: el.querySelector("name[type='primary']")?.getAttribute("value") ?? "Unknown",
-      year: el.querySelector("yearpublished")?.getAttribute("value") ?? "?"
-    }));
-    if (!items.length) { bggStatus("No results found."); return; }
-    const box = document.getElementById("bggResults");
-    box.innerHTML = "";
-    items.forEach(item => {
-      const btn = document.createElement("button");
-      btn.className = "bgg-result";
-      btn.innerHTML = `<strong>${item.name}</strong> <span class="bgg-year">(${item.year})</span>`;
-      btn.addEventListener("click", () => selectBggGame(item.id, item.name));
-      box.appendChild(btn);
-    });
-  } catch (e) {
-    bggStatus(`Could not reach BGG: ${e.message}`, "bgg-err");
-  }
-}
-
-async function selectBggGame(id, fallbackName) {
-  bggStatus("Fetching details…");
-  try {
-    const doc = await bggFetch(
-      `https://boardgamegeek.com/xmlapi2/thing?id=${id}&stats=1`
-    );
-    const el   = doc.querySelector("item");
-    const name = el.querySelector("name[type='primary']")?.getAttribute("value") ?? fallbackName;
-    const minP = el.querySelector("minplayers")?.getAttribute("value") ?? "1";
-    const maxP = el.querySelector("maxplayers")?.getAttribute("value") ?? "?";
-    const time = el.querySelector("playingtime")?.getAttribute("value")  ?? "0";
-    const wRaw = el.querySelector("averageweight")?.getAttribute("value") ?? "0";
-    const players = minP === maxP ? `${minP}p` : `${minP}-${maxP}p`;
-    const weight  = parseFloat(wRaw).toFixed(1);
-    const slug    = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/, "");
-    const url     = `https://boardgamegeek.com/boardgame/${id}/${slug}`;
-    GAMES.push({ name, url, emoji:"", players, time: bggFormatTime(time), weight, desc:"" });
-    checked.push(true);
-    closeBggModal();
-    render();
-    generate();
-    const cards = document.querySelectorAll(".game-card");
-    cards[cards.length - 1]?.querySelector("[data-field='emoji']")?.focus();
-  } catch (e) {
-    // Proxies all failed — add a stub so the user can fill in the missing fields
-    const slug = fallbackName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/, "");
-    GAMES.push({ name: fallbackName, url: `https://boardgamegeek.com/boardgame/${id}/${slug}`, emoji:"", players:"", time:"", weight:"", desc:"" });
-    checked.push(true);
-    closeBggModal();
-    render();
-    generate();
-    const cards = document.querySelectorAll(".game-card");
-    cards[cards.length - 1]?.querySelector("[data-field='players']")?.focus();
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-
 loadData();
 render();
 renderFormatBar();
