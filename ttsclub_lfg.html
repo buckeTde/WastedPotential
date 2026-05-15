@@ -357,6 +357,35 @@
       background: #2e3036;
     }
 
+    /* ── Intro area ── */
+    .field-label {
+      font-size: 0.7rem;
+      color: #72767d;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .field-label small { text-transform: none; letter-spacing: 0; font-size: 0.65rem; color: #4e5058; }
+    .command-line {
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.81rem;
+      color: #7289da;
+      background: #111214;
+      border: 1px solid #4e5058;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      padding: 6px 14px;
+      user-select: none;
+    }
+    #introText {
+      height: 76px;
+      background: #1a1b1e;
+      border-color: #4e5058;
+      border-radius: 0 0 6px 6px;
+      margin-bottom: 8px;
+    }
+    #introText:focus { border-color: #5865f2; background: #16171a; }
+
     /* ── Format preview ── */
     .format-preview {
       background: #111214;
@@ -388,6 +417,10 @@
   <span class="section-title">Output</span>
   <span class="section-sub">copy this into Discord</span>
 </div>
+
+<div class="field-label">Intro text <small>· text shown after the command</small></div>
+<div class="command-line">!lfg</div>
+<textarea id="introText" spellcheck="false" placeholder="one of the following:&#10;&#10;*Can teach 'em all:*"></textarea>
 
 <div class="output-area">
   <textarea id="output" readonly placeholder="Output updates automatically as you edit…"></textarea>
@@ -622,6 +655,7 @@ const DEFAULTS = [
   { name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
   { name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
 ];
+const DEFAULT_CHECKED = [true,true,true,true,true,true,true,true,true,true,true];
 
 const COLUMNS = [
   { id:"icon",    label:"Icon",    render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
@@ -638,6 +672,7 @@ let GAME_DRAG_IDX = null;
 
 const BUILD_DATE  = "2026-05-16";
 const STORAGE_KEY = "lfg_saved_v3";
+let INTRO = "one of the following:\n\n*Can teach 'em all:*";
 const GAMES   = [];
 const checked = [];
 
@@ -655,16 +690,17 @@ function loadData() {
         FORMAT.useUrl = s.format.useUrl ?? true;
         FORMAT.wrap   = Object.assign({}, DEFAULT_WRAP, s.format.wrap ?? {});
       }
+      if (s.intro !== undefined) INTRO = s.intro;
       return;
     }
   } catch {}
   GAMES.splice(0, GAMES.length, ...DEFAULTS.map((g, i) => ({ ...g, _defaultIdx: i })));
-  checked.splice(0, checked.length, ...GAMES.map(() => true));
+  checked.splice(0, checked.length, ...GAMES.map((_, i) => DEFAULT_CHECKED[i] !== false));
 }
 
 function persistData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    games: GAMES, checked: [...checked],
+    games: GAMES, checked: [...checked], intro: INTRO,
     format: { sep: FORMAT.sep, order: [...FORMAT.order], hidden: [...FORMAT.hidden], useUrl: FORMAT.useUrl, wrap: FORMAT.wrap }
   }));
 }
@@ -675,6 +711,7 @@ function resetDefaults() {
   FORMAT.sep = "┃"; FORMAT.order = ["icon","name","players","time","weight","desc"]; FORMAT.hidden = []; FORMAT.useUrl = true;
   FORMAT.wrap = { ...DEFAULT_WRAP };
   loadData();
+  document.getElementById("introText").value = INTRO;
   render();
   renderFormatBar();
   generate();
@@ -691,9 +728,12 @@ function bakeDefaults() {
   const newKey = STORAGE_KEY.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`);
   const today = new Date().toISOString().slice(0, 10);
   let html = document.documentElement.outerHTML;
+  const newDefaultChecked = `const DEFAULT_CHECKED = [${checked.map(c => String(c)).join(",")}];`;
   html = html.replace(/const DEFAULTS = \[[\s\S]*?\n\];/, newDefaults);
+  html = html.replace(/const DEFAULT_CHECKED = \[[^\]]*\];/, newDefaultChecked);
   html = html.replace(/const FORMAT = \{.*?\};/, newFormat);
   html = html.replace(/const BUILD_DATE\s*=\s*"[^"]*"/, `const BUILD_DATE  = "${today}"`);
+  html = html.replace(/let INTRO = "(?:[^"\\]|\\.)*"/, () => `let INTRO = ${JSON.stringify(INTRO)}`);
   html = html.replace(new RegExp(`"${STORAGE_KEY}"`), `"${newKey}"`);
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
@@ -994,8 +1034,9 @@ function generate() {
     .filter(g => g.name.trim())
     .map(generateLine);
 
+  const intro = INTRO.trim() ? " " + INTRO : "";
   document.getElementById("output").value = lines.length
-    ? "!lfg one of the following:\n\n*Can teach 'em all:*\n\n" + lines.join("\n")
+    ? "!lfg" + intro + "\n\n" + lines.join("\n")
     : "(No games selected)";
 }
 
@@ -1028,6 +1069,12 @@ async function checkForUpdate() {
 loadData();
 render();
 renderFormatBar();
+document.getElementById("introText").value = INTRO;
+document.getElementById("introText").addEventListener("input", function() {
+  INTRO = this.value;
+  persistData();
+  generate();
+});
 document.getElementById("sepInput").addEventListener("input", function() {
   FORMAT.sep = this.value;
   generate();
