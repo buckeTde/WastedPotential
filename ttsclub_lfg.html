@@ -156,6 +156,8 @@
 
     .save-btn:hover   { color: #3ba55c; background: #1d3a26; }
     .save-btn.saved   { color: #3ba55c; }
+    .save-btn.dirty   { color: #faa61a; }
+    .save-btn.dirty:hover { color: #faa61a; background: #2e2412; }
     .revert-btn:hover { color: #faa61a; background: #2e2412; }
     .trash-btn:hover  { color: #ed4245; background: #3a1f20; }
 
@@ -667,12 +669,12 @@ const DEFAULTS = [
   { checked:false,  name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
 ];
 const COLUMNS = [
-  { id:"icon",    label:"Icon",    render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
-  { id:"name",    label:"Name",    render: g => FORMAT.useUrl && g.url.trim() ? `[**${g.name}**](${g.url})` : `**${g.name}**` },
-  { id:"players", label:"Players",     render: g => `${FORMAT.wrap.players?.pre??""}${g.players}${FORMAT.wrap.players?.suf??""}` },
-  { id:"time",    label:"Time",        render: g => `${FORMAT.wrap.time?.pre??"*"}${g.time}${FORMAT.wrap.time?.suf??"*"}` },
-  { id:"weight",  label:"Weight",      render: g => `${FORMAT.wrap.weight?.pre??"*w: "}${g.weight}${FORMAT.wrap.weight?.suf??"/5*"}` },
-  { id:"desc",    label:"Description", render: g => `${FORMAT.wrap.desc?.pre??""}${g.desc}${FORMAT.wrap.desc?.suf??""}` },
+  { id:"icon",    label:"Icon",        field:"emoji",   render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
+  { id:"name",    label:"Name",        field:"name",    render: g => FORMAT.useUrl && g.url.trim() ? `[**${g.name}**](${g.url})` : `**${g.name}**` },
+  { id:"players", label:"Players",     field:"players", render: g => `${FORMAT.wrap.players?.pre??""}${g.players}${FORMAT.wrap.players?.suf??""}` },
+  { id:"time",    label:"Time",        field:"time",    render: g => `${FORMAT.wrap.time?.pre??"*"}${g.time}${FORMAT.wrap.time?.suf??"*"}` },
+  { id:"weight",  label:"Weight",      field:"weight",  render: g => `${FORMAT.wrap.weight?.pre??"*w: "}${g.weight}${FORMAT.wrap.weight?.suf??"/5*"}` },
+  { id:"desc",    label:"Description", field:"desc",    render: g => `${FORMAT.wrap.desc?.pre??""}${g.desc}${FORMAT.wrap.desc?.suf??""}` },
 ];
 
 const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"", suf:"" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } } };
@@ -838,11 +840,11 @@ function createCard(g, i) {
   });
 
   card.querySelector(".save-btn").addEventListener("click", function() {
-    // Snapshot current values so ↺ reverts to this saved state
     GAMES[i]._snap = { name:GAMES[i].name, url:GAMES[i].url, emoji:GAMES[i].emoji,
       players:GAMES[i].players, time:GAMES[i].time, weight:GAMES[i].weight, desc:GAMES[i].desc };
     persistData();
     generate();
+    this.classList.remove("dirty");
     this.classList.add("saved");
     setTimeout(() => { this.classList.remove("saved"); }, 1500);
   });
@@ -868,7 +870,12 @@ function createCard(g, i) {
   });
 
   card.querySelectorAll("input[type=text]").forEach(input => {
-    input.addEventListener("input", () => { GAMES[i][input.dataset.field] = input.value; });
+    input.addEventListener("input", () => {
+      GAMES[i][input.dataset.field] = input.value;
+      const sb = card.querySelector(".save-btn");
+      sb.classList.add("dirty"); sb.classList.remove("saved");
+      persistData(); generate();
+    });
   });
 
   return card;
@@ -967,7 +974,9 @@ function addGame() {
 function generateLine(g) {
   const parts = FORMAT.order
     .filter(id => !FORMAT.hidden.includes(id))
-    .map(id => COLUMNS.find(c => c.id === id).render(g));
+    .map(id => COLUMNS.find(c => c.id === id))
+    .filter(col => (g[col.field] ?? "").trim())
+    .map(col => col.render(g));
   return parts.join(` ${FORMAT.sep} `);
 }
 
