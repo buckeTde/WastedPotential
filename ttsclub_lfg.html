@@ -210,7 +210,22 @@
     .spacer { flex: 1; }
 
     /* ── Output ── */
-    .output-area { position: relative; margin-bottom: 12px; }
+    .output-area { position: relative; margin-bottom: 6px; }
+    .char-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.71rem;
+      color: #4e5058;
+      margin-bottom: 12px;
+      padding: 0 2px;
+    }
+    .char-count { transition: color 0.2s; }
+    .char-count.ok   { color: #3ba55c; }
+    .char-count.warn { color: #faa61a; }
+    .char-count.over { color: #ed4245; font-weight: 600; }
+    .char-tip a { color: #4e5058; text-decoration: underline; text-underline-offset: 2px; }
+    .char-tip a:hover { color: #72767d; }
     .output-area #copyBtn {
       position: absolute; top: 7px; right: 8px;
       padding: 5px 12px; font-size: 0.78rem;
@@ -434,6 +449,10 @@
 <div class="output-area">
   <textarea id="output" readonly placeholder="Output updates automatically as you edit…"></textarea>
   <button class="ui-btn btn-secondary" id="copyBtn" onclick="copyOutput()">Copy</button>
+</div>
+<div class="char-info">
+  <span id="charCount" class="char-count"></span>
+  <span class="char-tip">Tip: shorten BGG URLs by removing the <code>/game-slug</code> at the end · free limit 2,000 · Nitro 4,000</span>
 </div>
 
 <div class="field-label">Intro text <small>· text shown after the command</small></div>
@@ -1053,9 +1072,16 @@ function generate() {
     .map(generateLine);
 
   const intro = INTRO.trim() ? " " + INTRO : "";
-  document.getElementById("output").value = lines.length
-    ? "!lfg" + intro + "\n\n" + lines.join("\n")
-    : "(No games selected)";
+  const text = lines.length ? "!lfg" + intro + "\n\n" + lines.join("\n") : "(No games selected)";
+  document.getElementById("output").value = text;
+
+  const len = lines.length ? text.length : 0;
+  const el = document.getElementById("charCount");
+  if (!len) { el.textContent = ""; el.className = "char-count"; }
+  else if (len <= 1800) { el.textContent = `${len} chars`; el.className = "char-count ok"; }
+  else if (len <= 2000) { el.textContent = `${len} / 2,000 — approaching free limit`; el.className = "char-count warn"; }
+  else if (len <= 4000) { el.textContent = `${len} / 4,000 — over free limit (2,000) · Nitro only`; el.className = "char-count warn"; }
+  else                  { el.textContent = `${len} / 4,000 — over Nitro limit too`; el.className = "char-count over"; }
 }
 
 function copyOutput() {
