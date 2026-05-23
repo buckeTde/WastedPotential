@@ -415,14 +415,14 @@
       padding: 6px 14px;
       user-select: none;
     }
-    #introText {
+    #introText, #outroText {
       height: 76px;
       background: #1a1b1e;
       border-color: #4e5058;
       border-radius: 0 0 6px 6px;
       margin-bottom: 8px;
     }
-    #introText:focus { border-color: #5865f2; background: #16171a; }
+    #introText:focus, #outroText:focus { border-color: #5865f2; background: #16171a; }
 
     /* ── Format preview ── */
     .format-preview {
@@ -469,6 +469,9 @@
 <div class="field-label">Intro text <small>· text shown after the command</small></div>
 <div class="command-line">!lfg</div>
 <textarea id="introText" spellcheck="false" placeholder="one of the following:&#10;&#10;*Can teach 'em all:*"></textarea>
+
+<div class="field-label">Outro text <small>· text appended after the game list</small></div>
+<textarea id="outroText" spellcheck="false" placeholder="React with your picks or drop a comment!"></textarea>
 
 <div class="section-head">
   <span class="section-title">Format</span>
@@ -697,6 +700,11 @@ const DEFAULTS = [
   { checked:false,  name:"Terraria: The Board Game", url:"https://boardgamegeek.com/boardgame/391286/terraria-the-board-game", emoji:":pick:", players:"3-4p", time:"~2h", weight:"2.5", desc:"Co-op Deckbuilding Adventure — dig, fight, explore and build together!" },
   { checked:false,  name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
   { checked:false,  name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
+  { checked:false,  name:"Aquatica (Complete)", url:"https://boardgamegeek.com/boardgame/256986/aquatica", emoji:":dolphin:", players:"3-4p", time:"~60m", weight:"2.0", desc:"Engine Builder — recruit sea creatures and claim the ocean depths!" },
+  { checked:false,  name:"Not Alone", url:"https://boardgamegeek.com/boardgame/194879/not-alone", emoji:":alien:", players:"4-7p", time:"~45m", weight:"1.9", desc:"Asymmetric Hidden Movement via cards — Survive while an alien tries to hunt you down!" },
+  { checked:false,  name:"Endeavour: Deep Sea", url:"https://boardgamegeek.com/boardgame/368767/endeavour-deep-sea", emoji:":octopus:", players:"3-4p", time:"~120m", weight:"2.8", desc:"Competetive or Co-op Exploration — dive deeper, discover creatures, and map the ocean floor!" },
+  { checked:false,  name:"The Presence", url:"https://boardgamegeek.com/boardgame/329543/the-presence", emoji:":ghost:", players:"4-5p", time:"~60m", weight:"2.3", desc:"Asymmetric Horror (Co-op/Semico-op) — investigate the haunting before the presence takes over!" },
+  { checked:false,  name:"Hand of Fate", url:"https://boardgamegeek.com/boardgame/205325/hand-of-fate-ordeals", emoji:":crystal_ball:", players:"2-4p", time:"~90m", weight:"2.5", desc:"Deck-Building Adventure — battle monsters and slay the evil foes king!" },
 ];
 const COLUMNS = [
   { id:"icon",    label:"Icon",        field:"emoji",   render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
@@ -721,6 +729,7 @@ let GAME_DRAG_IDX = null;
 const BUILD_DATE  = "2026-05-23";
 const STORAGE_KEY = "lfg_saved_v3";
 let INTRO = "one of the following:\n\n*Can teach 'em all:*";
+let OUTRO = "";
 const GAMES = [];
 
 function loadData() {
@@ -743,6 +752,7 @@ function loadData() {
         FORMAT.customColsNextId = s.format.customColsNextId ?? 0;
       }
       if (s.intro !== undefined) INTRO = s.intro;
+      if (s.outro !== undefined) OUTRO = s.outro;
       return;
     }
   } catch {}
@@ -751,7 +761,7 @@ function loadData() {
 
 function persistData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    games: GAMES, intro: INTRO,
+    games: GAMES, intro: INTRO, outro: OUTRO,
     format: { sep: FORMAT.sep, order: [...FORMAT.order], hidden: [...FORMAT.hidden], useUrl: FORMAT.useUrl, wrap: FORMAT.wrap, customCols: FORMAT.customCols, customColsNextId: FORMAT.customColsNextId }
   }));
 }
@@ -763,7 +773,9 @@ function resetDefaults() {
   FORMAT.wrap = { ...DEFAULT_WRAP };
   FORMAT.customCols = []; FORMAT.customColsNextId = 0;
   loadData();
+  OUTRO = "";
   document.getElementById("introText").value = INTRO;
+  document.getElementById("outroText").value = OUTRO;
   render();
   renderFormatBar();
   generate();
@@ -786,6 +798,7 @@ function bakeDefaults() {
   html = html.replace(/const FORMAT = \{.*?\};/, newFormat);
   html = html.replace(/const BUILD_DATE\s*=\s*"[^"]*"/, `const BUILD_DATE  = "${today}"`);
   html = html.replace(/let INTRO = "(?:[^"\\]|\\.)*"/, () => `let INTRO = ${JSON.stringify(INTRO)}`);
+  html = html.replace(/let OUTRO = "(?:[^"\\]|\\.)*"/, () => `let OUTRO = ${JSON.stringify(OUTRO)}`);
   html = html.replace(new RegExp(`"${STORAGE_KEY}"`), `"${newKey}"`);
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
@@ -1149,7 +1162,8 @@ function generate() {
     .map(generateLine);
 
   const intro = INTRO.trim() ? " " + INTRO : "";
-  const text = lines.length ? "!lfg" + intro + "\n\n" + lines.join("\n") : "(No games selected)";
+  const outro = OUTRO.trim() ? "\n\n" + OUTRO : "";
+  const text = lines.length ? "!lfg" + intro + "\n\n" + lines.join("\n") + outro : "(No games selected)";
   document.getElementById("output").value = text;
 
   const len = lines.length ? text.length : 0;
@@ -1193,6 +1207,12 @@ renderFormatBar();
 document.getElementById("introText").value = INTRO;
 document.getElementById("introText").addEventListener("input", function() {
   INTRO = this.value;
+  persistData();
+  generate();
+});
+document.getElementById("outroText").value = OUTRO;
+document.getElementById("outroText").addEventListener("input", function() {
+  OUTRO = this.value;
   persistData();
   generate();
 });
