@@ -700,7 +700,7 @@ const DEFAULTS = [
 ];
 const COLUMNS = [
   { id:"icon",    label:"Icon",        field:"emoji",   render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
-  { id:"name",    label:"Name",        field:"name",    render: g => FORMAT.useUrl && g.url.trim() ? `[**${g.name}**](${g.url})` : `**${g.name}**` },
+  { id:"name",    label:"Name",        field:"name",    render: g => { const pre=FORMAT.wrap.name?.pre??"**", suf=FORMAT.wrap.name?.suf??"**"; return FORMAT.useUrl && g.url.trim() ? `[${pre}${g.name}${suf}](${g.url})` : `${pre}${g.name}${suf}`; } },
   { id:"players", label:"Players",     field:"players", render: g => `${FORMAT.wrap.players?.pre??""}${g.players}${FORMAT.wrap.players?.suf??""}` },
   { id:"time",    label:"Time",        field:"time",    render: g => `${FORMAT.wrap.time?.pre??"*"}${g.time}${FORMAT.wrap.time?.suf??"*"}` },
   { id:"weight",  label:"Weight",      field:"weight",  render: g => `${FORMAT.wrap.weight?.pre??"*w: "}${g.weight}${FORMAT.wrap.weight?.suf??"/5*"}` },
