@@ -99,6 +99,17 @@
       gap: 6px;
       align-items: center;
     }
+    /* Custom column rows inside game card */
+    .card-custom { margin-top: 5px; display: flex; flex-direction: column; gap: 4px; }
+    .card-custom-field { display: grid; grid-template-columns: 90px 1fr; gap: 6px; align-items: center; }
+    .custom-col-label { font-size: 0.67rem; color: #72767d; text-transform: uppercase; letter-spacing: 0.05em; text-align: right; }
+
+    /* Custom column chip controls */
+    .add-col-chip { border-style: dashed !important; color: #72767d; justify-content: center; }
+    .add-col-chip:hover { color: #dcddde; border-color: #5865f2 !important; }
+    .col-chip-del { font-size: 0.85rem; line-height: 1; padding: 0 2px; cursor: pointer; color: #72767d; flex-shrink: 0; }
+    .col-chip-del:hover { color: #ed4245; }
+
     .url-label {
       font-size: 0.67rem;
       color: #4e5058;
@@ -696,11 +707,18 @@ const COLUMNS = [
   { id:"desc",    label:"Description", field:"desc",    render: g => `${FORMAT.wrap.desc?.pre??""}${g.desc}${FORMAT.wrap.desc?.suf??""}` },
 ];
 
-const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"", suf:"" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } } };
+const FORMAT = { sep:"┃", order:["icon","name","players","time","weight","desc"], hidden:[], useUrl:true, wrap:{ icon:{ pre:"", suf:"" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } }, customCols:[], customColsNextId:0 };
 const DEFAULT_WRAP = { icon:{ pre:"", suf:"" }, name:{ pre:"", suf:"" }, players:{ pre:"", suf:"" }, time:{ pre:"*", suf:"*" }, weight:{ pre:"*w: ", suf:"/5*" }, desc:{ pre:"", suf:"" } };
+
+function getAllColumns() {
+  return [...COLUMNS, ...FORMAT.customCols.map(cc => ({
+    id: cc.id, label: cc.label, field: cc.id,
+    render: g => `${FORMAT.wrap[cc.id]?.pre??""}${g[cc.id]??""}${FORMAT.wrap[cc.id]?.suf??""}`
+  }))];
+}
 let GAME_DRAG_IDX = null;
 
-const BUILD_DATE  = "2026-05-20";
+const BUILD_DATE  = "2026-05-23";
 const STORAGE_KEY = "lfg_saved_v3";
 let INTRO = "one of the following:\n\n*Can teach 'em all:*";
 const GAMES = [];
@@ -720,7 +738,9 @@ function loadData() {
         FORMAT.order  = s.format.order  ?? ["icon","name","players","time","weight","desc"];
         FORMAT.hidden = s.format.hidden ?? [];
         FORMAT.useUrl = s.format.useUrl ?? true;
-        FORMAT.wrap   = Object.assign({}, DEFAULT_WRAP, s.format.wrap ?? {});
+        FORMAT.wrap           = Object.assign({}, DEFAULT_WRAP, s.format.wrap ?? {});
+        FORMAT.customCols     = s.format.customCols     ?? [];
+        FORMAT.customColsNextId = s.format.customColsNextId ?? 0;
       }
       if (s.intro !== undefined) INTRO = s.intro;
       return;
@@ -732,7 +752,7 @@ function loadData() {
 function persistData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     games: GAMES, intro: INTRO,
-    format: { sep: FORMAT.sep, order: [...FORMAT.order], hidden: [...FORMAT.hidden], useUrl: FORMAT.useUrl, wrap: FORMAT.wrap }
+    format: { sep: FORMAT.sep, order: [...FORMAT.order], hidden: [...FORMAT.hidden], useUrl: FORMAT.useUrl, wrap: FORMAT.wrap, customCols: FORMAT.customCols, customColsNextId: FORMAT.customColsNextId }
   }));
 }
 
@@ -741,6 +761,7 @@ function resetDefaults() {
   localStorage.removeItem(STORAGE_KEY);
   FORMAT.sep = "┃"; FORMAT.order = ["icon","name","players","time","weight","desc"]; FORMAT.hidden = []; FORMAT.useUrl = true;
   FORMAT.wrap = { ...DEFAULT_WRAP };
+  FORMAT.customCols = []; FORMAT.customColsNextId = 0;
   loadData();
   document.getElementById("introText").value = INTRO;
   render();
@@ -750,14 +771,14 @@ function resetDefaults() {
 
 function bakeDefaults() {
   if (!confirm("Write current game list and format settings into the file as new hardcoded defaults?\n\nThis downloads an updated ttsclub_lfg.html — replace your current file with it.")) return;
-  const FIELDS = ["name","url","emoji","players","time","weight","desc"];
+  const FIELDS = ["name","url","emoji","players","time","weight","desc", ...FORMAT.customCols.map(cc => cc.id)];
   const lines = GAMES.map(g => {
     const fields = FIELDS.map(f => `${f}:${JSON.stringify(g[f] || "")}`);
     fields.push(`checked:${g.checked !== false}`);
     return `  { ${fields.join(", ")} }`;
   });
   const newDefaults = `const DEFAULTS = [\n${lines.join(",\n")},\n];`;
-  const newFormat = `const FORMAT = ${JSON.stringify({ sep:FORMAT.sep, order:[...FORMAT.order], hidden:[...FORMAT.hidden], useUrl:FORMAT.useUrl, wrap:FORMAT.wrap })};`;
+  const newFormat = `const FORMAT = ${JSON.stringify({ sep:FORMAT.sep, order:[...FORMAT.order], hidden:[...FORMAT.hidden], useUrl:FORMAT.useUrl, wrap:FORMAT.wrap, customCols:FORMAT.customCols, customColsNextId:FORMAT.customColsNextId })};`;
   const newKey = STORAGE_KEY.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`);
   const today = new Date().toISOString().slice(0, 10);
   let html = document.documentElement.outerHTML;
@@ -806,6 +827,23 @@ function createCard(g, i) {
       <span class="url-label">BGG URL</span>
     </div>
   `;
+
+  if (FORMAT.customCols.length) {
+    const customRow = document.createElement("div");
+    customRow.className = "card-custom";
+    FORMAT.customCols.forEach(cc => {
+      const row = document.createElement("div");
+      row.className = "card-custom-field";
+      const lbl = document.createElement("span");
+      lbl.className = "custom-col-label"; lbl.textContent = cc.label;
+      const cinp = document.createElement("input");
+      cinp.type = "text"; cinp.dataset.field = cc.id;
+      cinp.value = g[cc.id] ?? ""; cinp.placeholder = cc.label + "…";
+      row.appendChild(lbl); row.appendChild(cinp);
+      customRow.appendChild(row);
+    });
+    card.appendChild(customRow);
+  }
 
   const handle = card.querySelector(".card-drag-handle");
   handle.addEventListener("mousedown", () => { card.draggable = true; });
@@ -859,8 +897,10 @@ function createCard(g, i) {
   });
 
   card.querySelector(".save-btn").addEventListener("click", function() {
-    GAMES[i]._snap = { name:GAMES[i].name, url:GAMES[i].url, emoji:GAMES[i].emoji,
+    const snap = { name:GAMES[i].name, url:GAMES[i].url, emoji:GAMES[i].emoji,
       players:GAMES[i].players, time:GAMES[i].time, weight:GAMES[i].weight, desc:GAMES[i].desc };
+    FORMAT.customCols.forEach(cc => { snap[cc.id] = GAMES[i][cc.id] ?? ""; });
+    GAMES[i]._snap = snap;
     persistData();
     generate();
     this.classList.remove("dirty");
@@ -870,7 +910,7 @@ function createCard(g, i) {
 
   card.querySelector(".revert-btn").addEventListener("click", () => {
     const source = GAMES[i]._snap || (GAMES[i]._defaultIdx !== undefined ? DEFAULTS[GAMES[i]._defaultIdx] : null);
-    const fields = ["name","url","emoji","players","time","weight","desc"];
+    const fields = ["name","url","emoji","players","time","weight","desc", ...FORMAT.customCols.map(cc => cc.id)];
     if (source) {
       fields.forEach(f => { GAMES[i][f] = source[f] || ""; });
     } else {
@@ -914,8 +954,11 @@ function renderFormatBar() {
   const container = document.getElementById("colChips");
   container.innerHTML = "";
   let dragSrcIdx = null;
+  const allCols = getAllColumns();
   FORMAT.order.forEach((id, idx) => {
-    const col = COLUMNS.find(c => c.id === id);
+    const col = allCols.find(c => c.id === id);
+    if (!col) return;
+    const isCustom = FORMAT.customCols.some(cc => cc.id === id);
     const chip = document.createElement("div");
     chip.className = "col-chip" + (FORMAT.hidden.includes(id) ? " excluded" : "");
     chip.draggable = true;
@@ -944,6 +987,22 @@ function renderFormatBar() {
       });
       chip.appendChild(tog);
     }
+
+    if (isCustom) {
+      const del = document.createElement("span");
+      del.className = "col-chip-del"; del.textContent = "×"; del.title = "Remove column";
+      del.addEventListener("click", e => {
+        e.stopPropagation();
+        if (!confirm(`Remove custom column "${col.label}"? Per-game values will be lost.`)) return;
+        FORMAT.customCols = FORMAT.customCols.filter(cc => cc.id !== id);
+        FORMAT.order  = FORMAT.order.filter(oid => oid !== id);
+        FORMAT.hidden = FORMAT.hidden.filter(oid => oid !== id);
+        delete FORMAT.wrap[id];
+        renderFormatBar(); render(); generate(); persistData();
+      });
+      chip.appendChild(del);
+    }
+
     chip.addEventListener("click", () => {
       const hi = FORMAT.hidden.indexOf(id);
       if (hi >= 0) FORMAT.hidden.splice(hi, 1); else FORMAT.hidden.push(id);
@@ -967,6 +1026,21 @@ function renderFormatBar() {
     });
     container.appendChild(chip);
   });
+
+  const addChip = document.createElement("div");
+  addChip.className = "col-chip add-col-chip";
+  addChip.title = "Add a custom column to the output";
+  addChip.textContent = "+ Add column";
+  addChip.addEventListener("click", () => {
+    const label = prompt("Column label (shown in chip and used as field name):");
+    if (!label?.trim()) return;
+    const id = `cx_${FORMAT.customColsNextId++}`;
+    FORMAT.customCols.push({ id, label: label.trim() });
+    FORMAT.order.push(id);
+    FORMAT.wrap[id] = { pre: "", suf: "" };
+    renderFormatBar(); render(); generate(); persistData();
+  });
+  container.appendChild(addChip);
 }
 
 function render() {
@@ -991,10 +1065,11 @@ function addGame() {
 }
 
 function generateLine(g) {
+  const cols = getAllColumns();
   const parts = FORMAT.order
     .filter(id => !FORMAT.hidden.includes(id))
-    .map(id => COLUMNS.find(c => c.id === id))
-    .filter(col => (g[col.field] ?? "").trim())
+    .map(id => cols.find(c => c.id === id))
+    .filter(col => col && (g[col.field] ?? "").trim())
     .map(col => col.render(g));
   return parts.join(` ${FORMAT.sep} `);
 }
