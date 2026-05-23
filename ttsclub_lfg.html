@@ -961,10 +961,12 @@ function renderFormatBar() {
     const isCustom = FORMAT.customCols.some(cc => cc.id === id);
     const chip = document.createElement("div");
     chip.className = "col-chip" + (FORMAT.hidden.includes(id) ? " excluded" : "");
-    chip.draggable = true;
+    chip.draggable = false;
     chip.innerHTML = "";
     const handle = document.createElement("span");
     handle.className = "drag-handle"; handle.textContent = "⠿";
+    handle.addEventListener("mousedown", () => { chip.draggable = true; });
+    document.addEventListener("mouseup", () => { chip.draggable = false; });
     chip.appendChild(handle);
 
     const w = FORMAT.wrap[id] || { pre:"", suf:"" };
