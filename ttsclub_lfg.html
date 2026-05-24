@@ -420,8 +420,10 @@
       background: #1a1b1e;
       border-color: #4e5058;
       border-radius: 0 0 6px 6px;
+      padding: 10px 14px;
       margin-bottom: 8px;
     }
+    #outroText { border-radius: 6px; }
     #introText:focus, #outroText:focus { border-color: #5865f2; background: #16171a; }
 
     /* ── Format preview ── */
@@ -690,21 +692,21 @@
 // Hardcoded defaults
 const DEFAULTS = [
   { checked:true,  name:"The Gang", url:"https://boardgamegeek.com/boardgame/411567/the-gang", emoji:":black_joker:", players:"3-10p", time:"~20m", weight:"1.7", desc:"Co-op Poker Heist — bet on your hand together without saying a word!" },
-  { checked:false,  name:"Hitster Bingo", url:"https://boardgamegeek.com/boardgame/383147/hitster-bingo", emoji:":musical_note:", players:"2-10p", time:"~30m", weight:"1.0", desc:"Music Bingo — recognize the hit, mark your card, shout BINGO!" },
-  { checked:false,  name:"Ship Show", url:"https://boardgamegeek.com/boardgame/378832/ship-show", emoji:":ship:", players:"3-8p", time:"~20m", weight:"1.1", desc:"Party Voting Game — ship it or skip it, split the group every time!" },
+  { checked:false,  name:"Hitster Bingo", url:"https://boardgamegeek.com/boardgame/424280/hitster-music-bingo", emoji:":musical_note:", players:"2-10p", time:"~30m", weight:"1.0", desc:"Music Bingo — recognize the hit, mark your card, shout BINGO!" },
+  { checked:false,  name:"Ship Show", url:"https://boardgamegeek.com/boardgame/424272/ship-show", emoji:":ship:", players:"3-8p", time:"~20m", weight:"1.1", desc:"Party Voting Game — ship it or skip it, split the group every time!" },
   { checked:true,  name:"Anno 1800", url:"https://boardgamegeek.com/boardgame/311193/anno-1800-the-board-game", emoji:":cityscape:", players:"3-4p", time:"~2h", weight:"3.1", desc:"Worker Placement City Engine Builder — industrialize faster than your rivals!" },
   { checked:true,  name:"Tapestry", url:"https://boardgamegeek.com/boardgame/286096/tapestry", emoji:":classical_building:", players:"3-5p", time:"~2h", weight:"2.9", desc:"Asymmetric Civ Builder — advance through science, military and exploration to glory!" },
   { checked:false,  name:"Sheriff of Nottingham", url:"https://boardgamegeek.com/boardgame/157969/sheriff-of-nottingham", emoji:":bow_and_arrow:", players:"3-5p", time:"~60m", weight:"2.0", desc:"Bluffing & Bribery Card Game — smuggle goods past the Sheriff!" },
   { checked:false,  name:"Cryptid", url:"https://boardgamegeek.com/boardgame/246784/cryptid", emoji:":snake:", players:"3-5p", time:"~50m", weight:"2.2", desc:"Competitive Deduction — share clues, eliminate locations, catch the creature first!" },
-  { checked:false,  name:"Whitehall Mystery", url:"https://boardgamegeek.com/boardgame/215312/whitehall-mystery", emoji:":fog:", players:"2-4p", time:"~60m", weight:"2.3", desc:"Hidden Movement Thriller — hunt Jack the Ripper through the foggy streets of London!" },
+  { checked:false,  name:"Whitehall Mystery", url:"https://boardgamegeek.com/boardgame/190082/whitehall-mystery", emoji:":fog:", players:"2-4p", time:"~60m", weight:"2.3", desc:"Hidden Movement Thriller — hunt Jack the Ripper through the foggy streets of London!" },
   { checked:false,  name:"Terraria: The Board Game", url:"https://boardgamegeek.com/boardgame/391286/terraria-the-board-game", emoji:":pick:", players:"3-4p", time:"~2h", weight:"2.5", desc:"Co-op Deckbuilding Adventure — dig, fight, explore and build together!" },
   { checked:false,  name:"Seas of Strife", url:"https://boardgamegeek.com/boardgame/225482/seas-of-strife", emoji:":anchor:", players:"3-6p", time:"~45m", weight:"1.5", desc:"Trick-Avoiding Card Game — don't win tricks or you'll sink!" },
-  { checked:false,  name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/359970/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~25m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
-  { checked:false,  name:"Aquatica (Complete)", url:"https://boardgamegeek.com/boardgame/256986/aquatica", emoji:":dolphin:", players:"3-4p", time:"~60m", weight:"2.0", desc:"Engine Builder — recruit sea creatures and claim the ocean depths!" },
+  { checked:false,  name:"7 Wonders Architects", url:"https://boardgamegeek.com/boardgame/346703/7-wonders-architects", emoji:":moyai:", players:"3-7p", time:"~30m", weight:"1.7", desc:"Card Drafting Civ Builder — race to complete your Wonder before your rivals!" },
+  { checked:false,  name:"Aquatica (Complete)", url:"https://boardgamegeek.com/boardgame/283393/aquatica", emoji:":dolphin:", players:"3-5p", time:"~90m", weight:"2.0", desc:"Engine Builder — recruit sea creatures and claim the ocean depths!" },
   { checked:false,  name:"Not Alone", url:"https://boardgamegeek.com/boardgame/194879/not-alone", emoji:":alien:", players:"4-7p", time:"~45m", weight:"1.9", desc:"Asymmetric Hidden Movement via cards — Survive while an alien tries to hunt you down!" },
-  { checked:false,  name:"Endeavour: Deep Sea", url:"https://boardgamegeek.com/boardgame/368767/endeavour-deep-sea", emoji:":octopus:", players:"3-4p", time:"~120m", weight:"2.8", desc:"Competetive or Co-op Exploration — dive deeper, discover creatures, and map the ocean floor!" },
+  { checked:false,  name:"Endeavor: Deep Sea", url:"https://boardgamegeek.com/boardgame/367966/endeavor-deep-sea", emoji:":octopus:", players:"3-4p", time:"~120m", weight:"2.8", desc:"Competitive or Co-op Exploration — dive deeper, discover creatures, and map the ocean floor!" },
   { checked:false,  name:"The Presence", url:"https://boardgamegeek.com/boardgame/329543/the-presence", emoji:":ghost:", players:"4-5p", time:"~60m", weight:"2.3", desc:"Asymmetric Horror (Co-op/Semico-op) — investigate the haunting before the presence takes over!" },
-  { checked:false,  name:"Hand of Fate", url:"https://boardgamegeek.com/boardgame/205325/hand-of-fate-ordeals", emoji:":crystal_ball:", players:"2-4p", time:"~90m", weight:"2.5", desc:"Deck-Building Adventure — battle monsters and slay the evil foes king!" },
+  { checked:false,  name:"Hand of Fate", url:"https://boardgamegeek.com/boardgame/216381/hand-of-fate-ordeals", emoji:":crystal_ball:", players:"2-4p", time:"~90m", weight:"2.5", desc:"Deck-Building Adventure — battle monsters and slay the evil foes king!" },
 ];
 const COLUMNS = [
   { id:"icon",    label:"Icon",        field:"emoji",   render: g => `${FORMAT.wrap.icon?.pre??""}${g.emoji}${FORMAT.wrap.icon?.suf??""}` },
@@ -726,9 +728,10 @@ function getAllColumns() {
 }
 let GAME_DRAG_IDX = null;
 
-const BUILD_DATE  = "2026-05-23";
+const BUILD_DATE  = "2026-05-24";
 const STORAGE_KEY = "lfg_saved_v3";
-let INTRO = "one of the following:\n\n*Can teach 'em all:*";
+const DEFAULT_INTRO = "one of the following:\n\n*Can teach 'em all:*";
+let INTRO = DEFAULT_INTRO;
 let OUTRO = "";
 const GAMES = [];
 
@@ -772,8 +775,8 @@ function resetDefaults() {
   FORMAT.sep = "┃"; FORMAT.order = ["icon","name","players","time","weight","desc"]; FORMAT.hidden = []; FORMAT.useUrl = true;
   FORMAT.wrap = { ...DEFAULT_WRAP };
   FORMAT.customCols = []; FORMAT.customColsNextId = 0;
+  INTRO = DEFAULT_INTRO; OUTRO = "";
   loadData();
-  OUTRO = "";
   document.getElementById("introText").value = INTRO;
   document.getElementById("outroText").value = OUTRO;
   render();
@@ -785,7 +788,7 @@ function bakeDefaults() {
   if (!confirm("Write current game list and format settings into the file as new hardcoded defaults?\n\nThis downloads an updated ttsclub_lfg.html — replace your current file with it.")) return;
   const FIELDS = ["name","url","emoji","players","time","weight","desc", ...FORMAT.customCols.map(cc => cc.id)];
   const lines = GAMES.map(g => {
-    const fields = FIELDS.map(f => `${f}:${JSON.stringify(g[f] || "")}`);
+    const fields = FIELDS.map(f => `${f}:${JSON.stringify(g[f] ?? "")}`);
     fields.push(`checked:${g.checked !== false}`);
     return `  { ${fields.join(", ")} }`;
   });
@@ -860,7 +863,6 @@ function createCard(g, i) {
 
   const handle = card.querySelector(".card-drag-handle");
   handle.addEventListener("mousedown", () => { card.draggable = true; });
-  document.addEventListener("mouseup", () => { card.draggable = false; });
   card.addEventListener("dragstart", e => {
     GAME_DRAG_IDX = i;
     e.dataTransfer.effectAllowed = "move";
@@ -979,16 +981,15 @@ function renderFormatBar() {
     const handle = document.createElement("span");
     handle.className = "drag-handle"; handle.textContent = "⠿";
     handle.addEventListener("mousedown", () => { chip.draggable = true; });
-    document.addEventListener("mouseup", () => { chip.draggable = false; });
     chip.appendChild(handle);
 
     const w = FORMAT.wrap[id] || { pre:"", suf:"" };
-    chip.appendChild(makeWrapInput(w.pre, "Prefix before value", v => { FORMAT.wrap[id] = { ...(FORMAT.wrap[id] ?? {}), pre: v }; generate(); }));
+    chip.appendChild(makeWrapInput(w.pre, "Prefix before value", v => { FORMAT.wrap[id] = { ...(FORMAT.wrap[id] ?? {}), pre: v }; persistData(); generate(); }));
 
     const lbl = document.createElement("span"); lbl.textContent = col.label;
     chip.appendChild(lbl);
 
-    chip.appendChild(makeWrapInput(w.suf, "Suffix after value", v => { FORMAT.wrap[id] = { ...(FORMAT.wrap[id] ?? {}), suf: v }; generate(); }));
+    chip.appendChild(makeWrapInput(w.suf, "Suffix after value", v => { FORMAT.wrap[id] = { ...(FORMAT.wrap[id] ?? {}), suf: v }; persistData(); generate(); }));
 
     if (id === "name") {
       const tog = document.createElement("span");
@@ -998,7 +999,7 @@ function renderFormatBar() {
       tog.addEventListener("click", e => {
         e.stopPropagation();
         FORMAT.useUrl = !FORMAT.useUrl;
-        renderFormatBar(); generate();
+        renderFormatBar(); persistData(); generate();
       });
       chip.appendChild(tog);
     }
@@ -1021,7 +1022,7 @@ function renderFormatBar() {
     chip.addEventListener("click", () => {
       const hi = FORMAT.hidden.indexOf(id);
       if (hi >= 0) FORMAT.hidden.splice(hi, 1); else FORMAT.hidden.push(id);
-      renderFormatBar(); generate();
+      renderFormatBar(); persistData(); generate();
     });
     chip.addEventListener("dragstart", e => {
       dragSrcIdx = idx;
@@ -1037,7 +1038,7 @@ function renderFormatBar() {
       if (dragSrcIdx === null || dragSrcIdx === idx) return;
       const moved = FORMAT.order.splice(dragSrcIdx, 1)[0];
       FORMAT.order.splice(idx, 0, moved);
-      renderFormatBar(); generate();
+      renderFormatBar(); persistData(); generate();
     });
     container.appendChild(chip);
   });
@@ -1218,12 +1219,16 @@ document.getElementById("outroText").addEventListener("input", function() {
 });
 document.getElementById("sepInput").addEventListener("input", function() {
   FORMAT.sep = this.value;
-  generate();
+  persistData(); generate();
 });
 generate();
 checkForUpdate();
 document.addEventListener("click", () => {
   document.querySelectorAll(".emoji-popup").forEach(p => p.classList.add("hidden"));
+});
+document.addEventListener("mouseup", () => {
+  document.querySelectorAll(".game-card[draggable='true'], .col-chip[draggable='true']")
+    .forEach(el => { el.draggable = false; });
 });
 </script>
 
