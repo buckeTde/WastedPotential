@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Gang Sense — Viewer</title>
+<style>
+  :root{
+    --bg:#0b1512; --panel:#12211c; --panel2:#0e1a16; --line:#1e3a30;
+    --ink:#e8f0ec; --dim:#8faea3; --gold:#dab033; --gold2:#f0c94a;
+    --red:#c94a4a; --green:#4ac97a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--gold2);cursor:pointer}
+  .wrap{max-width:1150px;margin:0 auto;padding:22px 18px 80px}
+  header h1{margin:0 0 2px;font-size:26px;letter-spacing:.5px}
+  header h1 .accent{color:var(--gold)}
+  header .sub{color:var(--dim);font-size:13px}
+
+  /* Drop zone */
+  #drop{margin:16px 0;border:2px dashed var(--line);border-radius:12px;
+    padding:22px;text-align:center;color:var(--dim);
+    transition:.15s;background:var(--panel2)}
+  #drop.hot{border-color:var(--gold);color:var(--ink);background:#153026;transform:scale(1.005)}
+  #drop.slim{padding:12px}
+  #drop b{color:var(--gold2)}
+  .btn{display:inline-block;background:var(--gold);color:#1a1205;border:0;border-radius:8px;
+    padding:8px 16px;font-weight:700;cursor:pointer;font-size:14px}
+  .btn:hover{background:var(--gold2)}
+  .btn.ghost{background:transparent;color:var(--dim);border:1px solid var(--line)}
+  .btn.ghost:hover{color:var(--ink);border-color:var(--gold)}
+
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:120px}
+  .stat .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+
+  .tabs{display:flex;gap:6px;margin:8px 0 12px;border-bottom:1px solid var(--line)}
+  .tab{padding:8px 16px;cursor:pointer;color:var(--dim);border-bottom:2px solid transparent}
+  .tab.on{color:var(--gold2);border-bottom-color:var(--gold)}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  input[type=search]{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:7px 11px;min-width:220px;font-size:14px}
+
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th.l,td.l{text-align:left}
+  th{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;
+    cursor:pointer;user-select:none;position:sticky;top:0;background:var(--bg)}
+  th:hover{color:var(--ink)}
+  th .arw{opacity:.5;font-size:10px;margin-left:3px}
+  th.sorted{color:var(--gold2)} th.sorted .arw{opacity:1}
+  tbody tr.clk{cursor:pointer}
+  tbody tr.clk:hover{background:#132821}
+  .rank{color:var(--dim);width:34px}
+  .name{font-weight:600}
+  .prov{color:var(--dim);font-weight:400;font-size:12px;margin-left:6px}
+  .tier{font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+  .tier.Mastermind{color:#f0c94a;border-color:#6b571a;background:#221c08}
+  .tier.Dealer{color:#7ec0ff;border-color:#264a63;background:#0d1d29}
+  .tier.Rookie{color:#c9c9c9}
+  .bar{height:8px;border-radius:5px;background:#1c2f28;overflow:hidden;min-width:70px}
+  .bar>i{display:block;height:100%}
+
+  /* player page */
+  .back{margin:0 0 12px}
+  .phead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .phead h2{margin:0;font-size:24px}
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0}
+  .cell{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .cell .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+  .cell .v{font-size:20px;font-weight:700}
+  .sec{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px;margin:22px 0 8px}
+  .muted{color:var(--dim);font-size:13px}
+  .hint{color:var(--dim);text-align:center;padding:40px 0}
+
+  /* weights bar */
+  .wbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:12px 0}
+  .wbar .wt{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .wcol{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:92px}
+  .wcol label{font-size:12px;color:var(--gold2);font-weight:600}
+  .wcol input[type=range]{width:92px;accent-color:var(--gold)}
+  .wcol .wp{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+
+  /* chart series selector */
+  .seriesbtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .segbtn{padding:5px 13px;border:1px solid var(--line);border-radius:20px;cursor:pointer;
+    color:var(--dim);font-size:13px;background:var(--panel2);user-select:none}
+  .segbtn:hover{color:var(--ink)}
+  .segbtn.on{color:#1a1205;background:var(--gold);border-color:var(--gold);font-weight:700}
+
+  /* chart */
+  .chartwrap{position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .chartwrap svg{display:block;width:100%;height:auto;cursor:crosshair}
+  #tip{position:absolute;pointer-events:none;display:none;background:#04100c;border:1px solid var(--gold);
+    border-radius:7px;padding:6px 9px;font-size:12px;transform:translate(-50%,-120%);white-space:nowrap;z-index:5}
+  #tip b{color:var(--gold2)}
+
+  /* overlay for per-game breakdown */
+  #ov{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:flex-start;
+    justify-content:center;padding:40px 16px;overflow:auto;z-index:20}
+  #ov.on{display:flex}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:720px;width:100%;padding:22px}
+  .card h2{margin:0 0 2px}
+  .close{float:right;cursor:pointer;color:var(--dim);font-size:24px;line-height:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The <span class="accent">Gang</span> Sense <span class="sub">— stat viewer</span></h1>
+    <div class="sub">Chip-reading accuracy across games &amp; rounds. Everything runs locally — your stats never leave your machine.</div>
+  </header>
+
+  <div id="drop">
+    <div id="dropmsg"><b>Drop</b> your <code>The GANG Sense*.json</code> file(s) here &nbsp;·&nbsp;
+      <button class="btn" id="pick">Choose files…</button></div>
+    <div class="muted" style="margin-top:6px">Drop several at once — they merge &amp; de-duplicate by game id.</div>
+    <input type="file" id="file" accept=".json,application/json" multiple hidden>
+  </div>
+
+  <div id="app" hidden>
+    <div class="stats" id="stats"></div>
+    <div id="weightbar"></div>
+    <div id="body"></div>
+  </div>
+  <div class="hint" id="empty">No data loaded yet.</div>
+</div>
+
+<div id="ov"><div class="card" id="ovcard"></div></div>
+
+<script>
+"use strict";
+/* ---- scoring: mirrors statsbook.lua ---- */
+// Relative round weights R1..R4. Default 10·20·30·60 = ratio 1·2·3·6 (statsbook default,
+// R4 = 50% of a full game). Only the ratios matter, so the sliders can be any 0..100.
+const DEFAULT_WEIGHTS=[10,20,30,60];
+let roundWeights=DEFAULT_WEIGHTS.slice();
+const MIN_RANKED=10;
+const TIERS=[{floor:85,label:"Mastermind"},{floor:60,label:"Dealer"},{floor:0,label:"Rookie"}];
+let games={};
+
+function weightedGameAccuracy(rounds){
+  if(!Array.isArray(rounds)) return null;
+  let num=0,wsum=0;
+  for(let r=0;r<4;r++){ const t=rounds[r];
+    if(t&&typeof t.score==="number"){ num+=roundWeights[r]*t.score; wsum+=roundWeights[r]; } }
+  return wsum===0?null:num/wsum;
+}
+// Group accuracy of one game = mean of every player's weighted game accuracy in it.
+function groupAccuracyOf(rec){ let num=0,cnt=0;
+  for(const k in (rec.players||{})){ const a=weightedGameAccuracy(rec.players[k].rounds); if(a!==null){num+=a;cnt++;} }
+  return cnt?num/cnt:null; }
+function tierFor(rating){ let bf=-1,l=""; for(const t of TIERS){ if(rating>=t.floor&&t.floor>bf){bf=t.floor;l=t.label;} } return l; }
+function lastKnownName(id){ let bt=-1,nm=null;
+  for(const g in games){ const p=games[g].players&&games[g].players[id];
+    if(p&&p.name&&(games[g].ts||0)>bt){ bt=games[g].ts||0; nm=p.name; } } return nm||id; }
+function aggregatePlayer(key){
+  const res={key,name:lastKnownName(key),rating:0,tier:"",gameCount:0,best:null,worst:null,perRound:[],history:[]};
+  let accSum=0; const rSum=[0,0,0,0],rCnt=[0,0,0,0];
+  for(const id in games){ const rec=games[id]; const p=rec.players&&rec.players[key];
+    if(!p||!p.rounds) continue;
+    const acc=weightedGameAccuracy(p.rounds);
+    if(acc!==null){ res.gameCount++; accSum+=acc;
+      const rr=[0,1,2,3].map(r=>{ const t=p.rounds[r]; return t&&typeof t.score==="number"?t.score:null; });
+      res.history.push({ts:rec.ts||0,acc,date:rec.date||"?",gameId:id,r:rr,group:groupAccuracyOf(rec)});
+      if(res.best===null||acc>res.best) res.best=acc;
+      if(res.worst===null||acc<res.worst) res.worst=acc; }
+    for(let r=0;r<4;r++){ const t=p.rounds[r]; if(t&&typeof t.score==="number"){ rSum[r]+=t.score; rCnt[r]++; } }
+  }
+  if(res.gameCount>0) res.rating=accSum/res.gameCount;
+  res.tier=tierFor(res.rating);
+  for(let r=0;r<4;r++) res.perRound[r]=rCnt[r]>0?rSum[r]/rCnt[r]:null;
+  res.history.sort((a,b)=>a.ts-b.ts);
+  return res;
+}
+function leaderboard(){
+  const keys={}; for(const id in games) for(const k in (games[id].players||{})) keys[k]=true;
+  const rows=[];
+  for(const k in keys){ const a=aggregatePlayer(k); if(a.gameCount>0){ a.ranked=a.gameCount>=MIN_RANKED; rows.push(a); } }
+  rows.sort((a,b)=>{ if(a.ranked!==b.ranked) return a.ranked?-1:1;
+    if(a.rating!==b.rating) return b.rating-a.rating; return b.gameCount-a.gameCount; });
+  rows.forEach((r,i)=>r.place=i+1);
+  return rows;
+}
+function gameList(){
+  const list=[];
+  for(const id in games){ const rec=games[id]; let num=0,cnt=0;
+    for(const k in (rec.players||{})){ const acc=weightedGameAccuracy(rec.players[k].rounds);
+      if(acc!==null){ num+=acc; cnt++; } }
+    list.push({gameId:id,date:rec.date||"?",ts:rec.ts||0,groupAccuracy:cnt?num/cnt:0,playerCount:cnt}); }
+  return list;
+}
+
+/* ---- parse TTS saved objects ---- */
+function extractGames(obj){
+  if(obj&&obj.games&&typeof obj.games==="object") return obj.games;
+  if(obj&&Array.isArray(obj.ObjectStates)){
+    const pick=o=>{ if(typeof o.LuaScriptState==="string"&&o.LuaScriptState){
+      try{ const st=JSON.parse(o.LuaScriptState); if(st&&st.games) return st.games; }catch(e){} } return null; };
+    for(const o of obj.ObjectStates) if(o.GMNotes==="StatsBook"){ const g=pick(o); if(g) return g; }
+    for(const o of obj.ObjectStates){ const g=pick(o); if(g) return g; }
+  }
+  return null;
+}
+function mergeIn(g){ let a=0; for(const id in g){ if(!(id in games)){ games[id]=g[id]; a++; } } return a; }
+
+/* ---- helpers ---- */
+const $=s=>document.querySelector(s);
+const pct=v=>v==null?"—":v.toFixed(0)+"%";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const accColor=v=>v==null?"#3a3a3a":`hsl(${Math.max(0,Math.min(120,(v/100)*120))} 55% 48%)`;
+function cmp(x,y,dir){ const xn=x==null,yn=y==null; if(xn&&yn)return 0; if(xn)return 1; if(yn)return -1;
+  if(typeof x==="string") return dir*x.localeCompare(y); return dir*(x-y); }
+
+/* ---- app state ---- */
+let route={name:"main"}, tab="board", query="", chartSeries="game";
+let boardSort={key:"place",dir:1}, gamesSort={key:"ts",dir:-1}, histSort={key:"ts",dir:-1};
+
+function render(){
+  const total=Object.keys(games).length;
+  if(total===0){ $("#app").hidden=true; $("#empty").style.display="block"; return; }
+  $("#app").hidden=false; $("#empty").style.display="none"; $("#drop").classList.add("slim");
+  initWeights();
+  $("#dropmsg").innerHTML=`<b>${total}</b> games loaded · drop more to merge · <button class="btn ghost" id="pick2">Add files…</button> <button class="btn ghost" id="clear">Clear</button>`;
+  $("#pick2").onclick=()=>$("#file").click();
+  $("#clear").onclick=()=>{ games={}; route={name:"main"}; render(); };
+  // stats
+  const ts=Object.values(games).map(g=>g.ts||0).filter(Boolean).sort((a,b)=>a-b);
+  const pk={}; for(const id in games) for(const k in (games[id].players||{})) pk[k]=true;
+  const dr=ts.length?`${new Date(ts[0]*1000).toISOString().slice(0,10)} → ${new Date(ts[ts.length-1]*1000).toISOString().slice(0,10)}`:"—";
+  $("#stats").innerHTML=stat(total,"games")+stat(Object.keys(pk).length,"players")+
+    `<div class="stat"><div class="v" style="font-size:15px">${dr}</div><div class="l">date range</div></div>`;
+  route.name==="player" ? renderPlayer(route.key) : renderMain();
+}
+const stat=(v,l)=>`<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+
+/* ---- configurable round weights (built once) ---- */
+let weightsBuilt=false, rafPending=false;
+function scheduleRender(){ if(rafPending) return; rafPending=true;
+  requestAnimationFrame(()=>{ rafPending=false; render(); }); }
+function updateWeightLabels(){
+  const sum=roundWeights.reduce((a,b)=>a+b,0);
+  for(let r=0;r<4;r++){ const el=$("#wp"+r); if(el) el.textContent= sum>0?Math.round(roundWeights[r]/sum*100)+"%":"–"; }
+  const note=$("#wnote"); if(note) note.textContent = sum>0?"only ratios matter — the % is each round's share":"set at least one weight above 0";
+}
+function initWeights(){
+  if(weightsBuilt) return; weightsBuilt=true;
+  const host=$("#weightbar");
+  host.innerHTML=`<div class="wbar"><span class="wt">Round&nbsp;weights</span>`+
+    [0,1,2,3].map(r=>`<div class="wcol"><label>R${r+1}</label>
+      <input type="range" min="0" max="100" value="${roundWeights[r]}" data-r="${r}">
+      <div class="wp" id="wp${r}"></div></div>`).join("")+
+    `<button class="btn ghost" id="wreset">Reset · 1·2·3·6</button>
+     <span class="muted" id="wnote"></span></div>`;
+  host.querySelectorAll('input[type=range]').forEach(inp=>inp.oninput=()=>{
+    roundWeights[+inp.dataset.r]=+inp.value; updateWeightLabels(); scheduleRender(); });
+  $("#wreset").onclick=()=>{ roundWeights=DEFAULT_WEIGHTS.slice();
+    host.querySelectorAll('input[type=range]').forEach(inp=>inp.value=roundWeights[+inp.dataset.r]);
+    updateWeightLabels(); render(); };
+  updateWeightLabels();
+}
+
+/* ---- main (leaderboard / games) ---- */
+function renderMain(){
+  $("#body").innerHTML=`
+    <div class="tabs">
+      <div class="tab ${tab==="board"?"on":""}" data-tab="board">Leaderboard</div>
+      <div class="tab ${tab==="games"?"on":""}" data-tab="games">Games</div>
+    </div>
+    <div class="toolbar">
+      ${tab==="board"?`<input type="search" id="q" placeholder="Filter by player name…" value="${esc(query)}">`:""}
+      <span class="muted" id="ctx"></span>
+    </div>
+    <div style="overflow:auto" id="tblhost"></div>`;
+  $("#body").querySelectorAll(".tab").forEach(t=>t.onclick=()=>{ tab=t.dataset.tab; render(); });
+  if(tab==="board"){ const q=$("#q"); q.oninput=()=>{ query=q.value; drawBoard(); q.focus(); }; drawBoard(); }
+  else drawGames();
+}
+
+function sortHeader(cols,sort){ // cols: [{key,label,cls}]
+  return "<tr>"+cols.map(c=>{ const on=sort.key===c.key;
+    return `<th class="${c.cls||''} ${on?'sorted':''}" data-k="${c.key}">${c.label}${on?`<span class=arw>${sort.dir<0?'▼':'▲'}</span>`:''}</th>`;
+  }).join("")+"</tr>";
+}
+function wireHeaders(host,sort,after){
+  host.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;
+    if(sort.key===k) sort.dir*=-1; else { sort.key=k; sort.dir=(k==="name")?1:-1; }
+    after();
+  });
+}
+
+function drawBoard(){
+  let rows=leaderboard();
+  if(query) rows=rows.filter(r=>r.name.toLowerCase().includes(query.trim().toLowerCase()));
+  const acc={ place:r=>r.place, name:r=>r.name.toLowerCase(), rating:r=>r.rating,
+    tier:r=>({Mastermind:3,Dealer:2,Rookie:1}[r.tier]||0), games:r=>r.gameCount,
+    r1:r=>r.perRound[0],r2:r=>r.perRound[1],r3:r=>r.perRound[2],r4:r=>r.perRound[3],
+    best:r=>r.best, worst:r=>r.worst };
+  const s=boardSort; if(s.key!=="place") rows=[...rows].sort((a,b)=>cmp(acc[s.key](a),acc[s.key](b),s.dir));
+  else if(s.dir<0) rows=[...rows].reverse();
+  $("#ctx").textContent=`${rows.length} players · click a name for the full profile · faded = provisional (<${MIN_RANKED} games)`;
+  const cols=[{key:"place",label:"#",cls:"rank"},{key:"name",label:"Player",cls:"l"},
+    {key:"rating",label:"Rating"},{key:"tier",label:"Tier"},{key:"games",label:"Games"},
+    {key:"r1",label:"R1"},{key:"r2",label:"R2"},{key:"r3",label:"R3"},{key:"r4",label:"R4"},
+    {key:"best",label:"Best"},{key:"worst",label:"Worst"}];
+  let h=`<table><thead>${sortHeader(cols,s)}</thead><tbody>`;
+  for(const r of rows){
+    h+=`<tr class="clk" data-player="${esc(r.key)}" style="${r.ranked?'':'opacity:.55'}">
+      <td class="rank">${r.place}</td>
+      <td class="l name">${esc(r.name)}${r.ranked?'':'<span class=prov>prov.</span>'}</td>
+      <td><b>${r.rating.toFixed(0)}%</b></td>
+      <td><span class="tier ${r.tier}">${r.tier}</span></td>
+      <td>${r.gameCount}</td>
+      <td>${pct(r.perRound[0])}</td><td>${pct(r.perRound[1])}</td><td>${pct(r.perRound[2])}</td><td>${pct(r.perRound[3])}</td>
+      <td style="color:var(--green)">${pct(r.best)}</td><td style="color:var(--red)">${pct(r.worst)}</td></tr>`;
+  }
+  h+="</tbody></table>";
+  const host=$("#tblhost"); host.innerHTML= rows.length?h:`<div class=hint>No players match “${esc(query)}”.</div>`;
+  host.querySelectorAll("tr[data-player]").forEach(tr=>tr.onclick=()=>{ route={name:"player",key:tr.dataset.player}; render(); });
+  wireHeaders(host,boardSort,drawBoard);
+}
+
+function drawGames(){
+  let list=gameList();
+  const acc={ts:g=>g.ts,date:g=>g.ts,players:g=>g.playerCount,acc:g=>g.groupAccuracy};
+  const s=gamesSort; list=[...list].sort((a,b)=>cmp(acc[s.key](a),acc[s.key](b),s.dir));
+  $("#ctx").textContent=`${list.length} games · click a row for the per-game breakdown`;
+  const cols=[{key:"date",label:"Date",cls:"l"},{key:"players",label:"Players"},
+    {key:"acc",label:"Group accuracy"},{key:"acc",label:""}];
+  let h=`<table><thead>${sortHeader(cols.slice(0,3),s)}<th></th></thead><tbody>`;
+  for(const g of list){
+    h+=`<tr class="clk" data-game="${esc(g.gameId)}">
+      <td class="l">${esc(g.date)}</td><td>${g.playerCount}</td>
+      <td><b>${g.groupAccuracy.toFixed(0)}%</b></td>
+      <td style="width:180px"><div class="bar"><i style="width:${g.groupAccuracy}%;background:${accColor(g.groupAccuracy)}"></i></div></td></tr>`;
+  }
+  h+="</tbody></table>";
+  const host=$("#tblhost"); host.innerHTML=h;
+  host.querySelectorAll("tr[data-game]").forEach(tr=>tr.onclick=()=>showGame(tr.dataset.game));
+  wireHeaders(host,gamesSort,drawGames);
+}
+
+/* ---- full player page ---- */
+function renderPlayer(key){
+  const a=aggregatePlayer(key);
+  $("#body").innerHTML=`
+    <div class="back"><button class="btn ghost" id="back">← Back to leaderboard</button></div>
+    <div class="phead">
+      <h2>${esc(a.name)}</h2>
+      <span class="tier ${a.tier}">${a.tier}</span>
+      <span class="muted">place #${a.place||"—"} · ${a.gameCount} games · ${a.ranked?"ranked":"provisional (needs "+MIN_RANKED+")"}</span>
+    </div>
+    <div class="muted">steam id ${esc(a.key)}</div>
+    <div class="rgrid">
+      <div class="cell"><div class="l">Rating</div><div class="v">${a.rating.toFixed(0)}%</div></div>
+      <div class="cell"><div class="l">Best game</div><div class="v" style="color:var(--green)">${pct(a.best)}</div></div>
+      <div class="cell"><div class="l">Worst game</div><div class="v" style="color:var(--red)">${pct(a.worst)}</div></div>
+      <div class="cell"><div class="l">Games</div><div class="v">${a.gameCount}</div></div>
+    </div>
+    <div class="sec">Average by round <span class="muted" style="text-transform:none">(weighted 1·2·3·6 → game accuracy)</span></div>
+    <div class="rgrid">${[0,1,2,3].map(r=>`<div class="cell"><div class="l">Round ${r+1}</div>
+      <div class="v">${pct(a.perRound[r])}</div>
+      <div class="bar" style="margin-top:6px"><i style="width:${a.perRound[r]||0}%;background:${accColor(a.perRound[r])}"></i></div></div>`).join("")}</div>
+    <div class="sec">Accuracy over time <span class="muted" style="text-transform:none">— hover to inspect, click a point to open that game</span></div>
+    <div class="seriesbtns" id="seriesbtns">${SERIES.map(s=>`<span class="segbtn ${chartSeries===s.key?"on":""}" data-s="${s.key}">${s.label}</span>`).join("")}</div>
+    <div class="chartwrap" id="chartwrap"><div id="tip"></div></div>
+    <div class="sec">Game history</div>
+    <div style="overflow:auto" id="histhost"></div>`;
+  $("#back").onclick=()=>{ route={name:"main"}; render(); };
+  $("#seriesbtns").querySelectorAll(".segbtn").forEach(b=>b.onclick=()=>{
+    chartSeries=b.dataset.s;
+    $("#seriesbtns").querySelectorAll(".segbtn").forEach(x=>x.classList.toggle("on",x.dataset.s===chartSeries));
+    drawChart(a.history,chartSeries); });
+  drawChart(a.history,chartSeries);
+  drawHistory(a);
+}
+
+const SERIES=[{key:"r1",label:"R1"},{key:"r2",label:"R2"},{key:"r3",label:"R3"},{key:"r4",label:"R4"},
+  {key:"game",label:"Game"},{key:"group",label:"Group"}];
+const seriesLabel=s=>({r1:"Round 1",r2:"Round 2",r3:"Round 3",r4:"Round 4",game:"Game accuracy",group:"Group accuracy"}[s]);
+function seriesVal(hh,s){ if(s==="game")return hh.acc; if(s==="group")return hh.group;
+  return hh.r?hh.r[{r1:0,r2:1,r3:2,r4:3}[s]]:null; }
+
+function drawChart(history,series){
+  const wrap=$("#chartwrap");
+  wrap.querySelector("#chart")?.remove();
+  wrap.querySelector(".chartmsg")?.remove();
+  const tip=$("#tip"); tip.style.display="none";
+  const w=760,h=220,padL=32,padR=12,padT=14,padB=24,n=history.length;
+  const X=i=> n===1? (padL+(w-padL-padR)/2) : padL+i*(w-padL-padR)/(n-1);
+  const Y=v=> padT+(1-v/100)*(h-padT-padB);
+  const vals=history.map(hh=>seriesVal(hh,series));
+  const pts=[]; let d="",prev=false;
+  vals.forEach((v,i)=>{ if(v==null){ prev=false; return; } const x=X(i),y=Y(v);
+    d+=(prev?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)+" "; prev=true;
+    pts.push({x,y,val:v,date:history[i].date,gameId:history[i].gameId}); });
+  if(pts.length===0){ wrap.insertAdjacentHTML("beforeend",`<div class="muted chartmsg" style="padding:14px">No data for ${seriesLabel(series)}.</div>`); return; }
+  let grid="";
+  for(const g of [0,25,50,75,100]){ const y=Y(g);
+    grid+=`<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#1a322a" stroke-dasharray="${g===50?'4 4':'0'}"/>`;
+    grid+=`<text x="${padL-6}" y="${y+3}" fill="#5f7d72" font-size="10" text-anchor="end">${g}</text>`; }
+  // area fill only when the series has no gaps (avoids weird shapes across skipped rounds)
+  const area = pts.length===n ? `<path d="${d}L${X(n-1).toFixed(1)} ${Y(0)} L${X(0).toFixed(1)} ${Y(0)} Z" fill="url(#fill)"/>` : "";
+  const dots=pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${n>80?1.6:2.6}" fill="${accColor(p.val)}"/>`).join("");
+  wrap.insertAdjacentHTML("beforeend",
+    `<svg id="chart" viewBox="0 0 ${w} ${h}">
+      <defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="#dab033" stop-opacity="0.22"/><stop offset="1" stop-color="#dab033" stop-opacity="0"/></linearGradient></defs>
+      ${grid}${area}
+      <path d="${d}" fill="none" stroke="var(--gold)" stroke-width="1.6"/>
+      ${dots}
+      <line id="vguide" x1="0" y1="${padT}" x2="0" y2="${h-padB}" stroke="var(--gold2)" stroke-opacity=".5" style="display:none"/>
+      <circle id="hi" r="4.5" fill="#04100c" stroke="var(--gold2)" stroke-width="2" style="display:none"/>
+    </svg>`);
+  const svg=$("#chart"),vg=$("#vguide"),hi=$("#hi");
+  const nearest=e=>{ const r=svg.getBoundingClientRect(); const vx=(e.clientX-r.left)/r.width*w;
+    let best=pts[0],bd=1e9; for(const p of pts){ const dd=Math.abs(p.x-vx); if(dd<bd){bd=dd;best=p;} } return best; };
+  svg.addEventListener("mousemove",e=>{ const p=nearest(e);
+    vg.setAttribute("x1",p.x); vg.setAttribute("x2",p.x); vg.style.display="";
+    hi.setAttribute("cx",p.x); hi.setAttribute("cy",p.y); hi.style.display="";
+    const r=svg.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
+    tip.style.left=(r.left+p.x/w*r.width - wr.left)+"px";
+    tip.style.top=(r.top+p.y/h*r.height - wr.top)+"px";
+    tip.innerHTML=`<b>${p.val.toFixed(0)}%</b> <span class="muted">${seriesLabel(series)}</span><br><span class="muted">${esc(p.date)}</span>`;
+    tip.style.display="block"; });
+  svg.addEventListener("mouseleave",()=>{ tip.style.display="none"; vg.style.display="none"; hi.style.display="none"; });
+  svg.addEventListener("click",e=>{ showGame(nearest(e).gameId); });
+}
+
+function drawHistory(a){
+  // per-game rows for this player: date, R1-R4, game acc, group acc
+  const rows=a.history.map(hh=>{ const rec=games[hh.gameId]; const p=rec.players[a.key];
+    let num=0,cnt=0; for(const k in rec.players){ const ga=weightedGameAccuracy(rec.players[k].rounds); if(ga!==null){num+=ga;cnt++;} }
+    return { gameId:hh.gameId, ts:hh.ts, date:hh.date, rounds:p.rounds, acc:hh.acc, group:cnt?num/cnt:0 }; });
+  const acc={ts:r=>r.ts,date:r=>r.ts,r1:r=>r.rounds[0]&&r.rounds[0].score,r2:r=>r.rounds[1]&&r.rounds[1].score,
+    r3:r=>r.rounds[2]&&r.rounds[2].score,r4:r=>r.rounds[3]&&r.rounds[3].score,acc:r=>r.acc,group:r=>r.group};
+  const s=histSort; rows.sort((x,y)=>cmp(acc[s.key](x),acc[s.key](y),s.dir));
+  const cols=[{key:"date",label:"Date",cls:"l"},{key:"r1",label:"R1"},{key:"r2",label:"R2"},
+    {key:"r3",label:"R3"},{key:"r4",label:"R4"},{key:"acc",label:"Game"},{key:"group",label:"Group"}];
+  const cell=t=> t&&typeof t.score==="number" ? t.score+"%" : "—";
+  let h=`<table><thead>${sortHeader(cols,s)}</thead><tbody>`;
+  for(const r of rows){
+    h+=`<tr class="clk" data-game="${esc(r.gameId)}"><td class="l">${esc(r.date)}</td>
+      <td>${cell(r.rounds[0])}</td><td>${cell(r.rounds[1])}</td><td>${cell(r.rounds[2])}</td><td>${cell(r.rounds[3])}</td>
+      <td><b>${r.acc==null?"—":r.acc.toFixed(0)+"%"}</b></td>
+      <td class="muted">${r.group.toFixed(0)}%</td></tr>`;
+  }
+  h+="</tbody></table>";
+  const host=$("#histhost"); host.innerHTML=h;
+  host.querySelectorAll("tr[data-game]").forEach(tr=>tr.onclick=()=>showGame(tr.dataset.game));
+  wireHeaders(host,histSort,()=>drawHistory(a));
+}
+
+/* ---- per-game breakdown modal ---- */
+function showGame(gameId){
+  const rec=games[gameId]; if(!rec) return;
+  const players=[];
+  for(const sid in (rec.players||{})){ const p=rec.players[sid];
+    players.push({key:sid,name:p.name||sid,rounds:p.rounds||[],acc:weightedGameAccuracy(p.rounds)}); }
+  players.sort((a,b)=>(b.acc||0)-(a.acc||0));
+  const cell=t=> t&&typeof t.score==="number"?t.score+"%":"—";
+  const rows=players.map(p=>`<tr class="clk" data-player="${esc(p.key)}"><td class="l name">${esc(p.name)}</td>
+    <td>${cell(p.rounds[0])}</td><td>${cell(p.rounds[1])}</td><td>${cell(p.rounds[2])}</td><td>${cell(p.rounds[3])}</td>
+    <td><b>${p.acc==null?"—":p.acc.toFixed(0)+"%"}</b></td></tr>`).join("");
+  const c=$("#ovcard");
+  c.innerHTML=`<span class="close">&times;</span><h2>Game breakdown</h2>
+    <div class="muted">${esc(rec.date||"?")} · ${players.length} players</div>
+    <table style="margin-top:14px"><thead><tr><th class="l">Player</th><th>R1</th><th>R2</th><th>R3</th><th>R4</th><th>Game</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="muted" style="margin-top:8px">Click a player to open their profile.</div>`;
+  c.querySelector(".close").onclick=closeOv;
+  c.querySelectorAll("tr[data-player]").forEach(tr=>tr.onclick=()=>{ closeOv(); route={name:"player",key:tr.dataset.player}; render(); });
+  $("#ov").classList.add("on");
+}
+function closeOv(){ $("#ov").classList.remove("on"); }
+$("#ov").onclick=e=>{ if(e.target.id==="ov") closeOv(); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeOv(); });
+
+/* ---- file loading + robust drop ---- */
+function handleFiles(fileList){
+  const files=[...fileList]; if(!files.length) return;
+  let done=0,added=0,ok=0,bad=[];
+  files.forEach(f=>{ const rd=new FileReader();
+    rd.onload=()=>{ try{ const g=extractGames(JSON.parse(rd.result));
+        if(g){ added+=mergeIn(g); ok++; } else bad.push(f.name); }
+      catch(e){ bad.push(f.name); }
+      if(++done===files.length){ render();
+        const ctx=$("#ctx"); if(ctx) ctx.textContent=`loaded ${ok} file(s), +${added} new games`+(bad.length?` · skipped: ${bad.join(", ")}`:""); } };
+    rd.onerror=()=>{ bad.push(f.name); if(++done===files.length) render(); };
+    rd.readAsText(f); });
+}
+const drop=$("#drop"),fileInput=$("#file");
+$("#pick").onclick=()=>fileInput.click();
+fileInput.onchange=()=>handleFiles(fileInput.files);
+// prevent the browser from navigating/opening a file if dropped anywhere on the window
+["dragover","drop"].forEach(ev=>window.addEventListener(ev,e=>e.preventDefault()));
+drop.addEventListener("dragenter",e=>{e.preventDefault();drop.classList.add("hot");});
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("hot");});
+drop.addEventListener("dragleave",e=>{ if(!drop.contains(e.relatedTarget)) drop.classList.remove("hot"); });
+drop.addEventListener("drop",e=>{ e.preventDefault(); drop.classList.remove("hot"); handleFiles(e.dataTransfer.files); });
+
+/* auto-load a sibling merged file when served over http(s); harmless on file:// */
+(function(){ if(location.protocol.startsWith("http")){
+  fetch("The GANG Sense MERGED-200.json").then(r=>r.ok?r.text():Promise.reject())
+    .then(t=>{ const g=extractGames(JSON.parse(t)); if(g){ mergeIn(g); render(); } }).catch(()=>{}); }})();
+</script>
+</body>
+</html>
