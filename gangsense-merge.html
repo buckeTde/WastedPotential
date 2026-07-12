@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Gang Sense — Book Merger</title>
+<style>
+  :root{--bg:#0b1512;--panel:#12211c;--panel2:#0e1a16;--line:#1e3a30;--ink:#e8f0ec;
+    --dim:#8faea3;--gold:#dab033;--gold2:#f0c94a;--red:#c94a4a;--green:#4ac97a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 18px 80px}
+  h1{margin:0 0 2px;font-size:24px} h1 .accent{color:var(--gold)}
+  .sub{color:var(--dim);font-size:13px}
+  #drop{margin:18px 0;border:2px dashed var(--line);border-radius:12px;padding:26px;
+    text-align:center;color:var(--dim);background:var(--panel2);transition:.15s}
+  #drop.hot{border-color:var(--gold);color:var(--ink);background:#153026}
+  #drop b{color:var(--gold2)}
+  .btn{display:inline-block;background:var(--gold);color:#1a1205;border:0;border-radius:8px;
+    padding:9px 18px;font-weight:700;cursor:pointer;font-size:14px}
+  .btn:hover{background:var(--gold2)} .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--dim);border:1px solid var(--line)}
+  .btn.ghost:hover{color:var(--ink);border-color:var(--gold)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+  .flist{list-style:none;margin:0;padding:0}
+  .flist li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .flist li:last-child{border-bottom:0}
+  .flist .n{color:var(--ink)} .flist .m{color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .flist .tpl{color:var(--gold2);font-size:11px;border:1px solid #6b571a;border-radius:10px;padding:0 6px;margin-left:6px}
+  .opts{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:6px 0 2px}
+  label.opt{display:flex;align-items:center;gap:7px;font-size:14px;cursor:pointer}
+  input[type=number]{width:80px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:5px 8px}
+  input[type=text]{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:7px 10px;width:100%;max-width:340px}
+  .stat{display:inline-block;margin-right:20px}
+  .stat .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+  .warn{color:var(--gold2);font-size:13px;margin-top:8px}
+  .err{color:var(--red);font-size:13px;margin-top:8px}
+  .muted{color:var(--dim);font-size:13px}
+  code{color:var(--gold2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The <span class="accent">Gang</span> Sense — Book Merger</h1>
+  <div class="sub">Combine two or more Stats Book saves into one. Games are unioned by id (duplicates collapse). Runs locally — nothing is uploaded.</div>
+
+  <div id="drop">
+    <div><b>Drop</b> your <code>The GANG Sense*.json</code> book files here (two or more) &nbsp;·&nbsp;
+      <button class="btn" id="pick">Choose files…</button></div>
+    <div class="muted" style="margin-top:6px">Include at least one real book file — it's used as the object template for the output.</div>
+    <input type="file" id="file" accept=".json,application/json" multiple hidden>
+  </div>
+
+  <div id="app" hidden>
+    <div class="panel">
+      <ul class="flist" id="flist"></ul>
+      <div style="margin-top:10px"><button class="btn ghost" id="clear">Clear all</button></div>
+    </div>
+
+    <div class="panel">
+      <div class="opts">
+        <label class="opt"><input type="checkbox" id="notest" checked> Remove test-player games <span class="muted">(<code>test_*</code>)</span></label>
+        <label class="opt"><input type="checkbox" id="docap"> Keep only newest
+          <input type="number" id="capn" value="200" min="1"> games</label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div id="summary"></div>
+      <div id="notes"></div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="fname" value="The GANG Sense MERGED.json">
+        <button class="btn" id="dl" disabled>⬇ Download merged book</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// A loaded file: { name, games, rawObj|null }
+let loaded=[];
+
+function extractGames(obj){
+  if(obj&&obj.games&&typeof obj.games==="object") return obj.games;
+  if(obj&&Array.isArray(obj.ObjectStates)){
+    const pick=o=>{ if(typeof o.LuaScriptState==="string"&&o.LuaScriptState){
+      try{ const st=JSON.parse(o.LuaScriptState); if(st&&st.games) return st.games; }catch(e){} } return null; };
+    for(const o of obj.ObjectStates) if(o.GMNotes==="StatsBook"){ const g=pick(o); if(g) return g; }
+    for(const o of obj.ObjectStates){ const g=pick(o); if(g) return g; }
+  }
+  return null;
+}
+function hasTemplate(obj){
+  return obj&&Array.isArray(obj.ObjectStates)&&obj.ObjectStates.some(o=>
+    o.GMNotes==="StatsBook"||(typeof o.LuaScriptState==="string"&&o.LuaScriptState.includes('"games"')));
+}
+const isTestGame=rec=>Object.keys(rec.players||{}).some(k=>String(k).toLowerCase().startsWith("test_"));
+const gcount=g=>Object.keys(g).length;
+
+/* build the merged games map from the current files + options */
+function buildMerged(){
+  const merged={}; let dup=0;
+  for(const f of loaded) for(const id in f.games){ if(id in merged) dup++; else merged[id]=f.games[id]; }
+  let testRemoved=0;
+  if($("#notest").checked){ for(const id in merged){ if(isTestGame(merged[id])){ delete merged[id]; testRemoved++; } } }
+  let capped=0;
+  if($("#docap").checked){ const n=Math.max(1,parseInt($("#capn").value)||1);
+    const ids=Object.keys(merged).sort((a,b)=>(merged[b].ts||0)-(merged[a].ts||0));
+    for(const id of ids.slice(n)){ delete merged[id]; capped++; } }
+  return {merged,dup,testRemoved,capped};
+}
+
+function refresh(){
+  const total=loaded.length;
+  $("#app").hidden = total===0;
+  if(total===0){ $("#drop").style.padding="26px"; return; }
+  $("#drop").style.padding="14px";
+  // file list
+  $("#flist").innerHTML = loaded.map((f,i)=>`<li><span class="n">${esc(f.name)}${f.rawObj?'<span class="tpl">template ok</span>':'<span class="tpl" style="color:var(--dim);border-color:var(--line)">games only</span>'}</span>
+    <span class="m">${gcount(f.games)} games</span></li>`).join("");
+
+  const {merged,dup,testRemoved,capped}=buildMerged();
+  const n=gcount(merged);
+  const bytes=JSON.stringify({games:merged}).length;
+  const kb=(bytes/1024).toFixed(0);
+  const est=Math.round(bytes/3686); // ~calibrated to TTS's slow JSON.decode (see viewer notes)
+  $("#summary").innerHTML =
+    `<span class="stat"><span class="v">${n}</span><span class="l">games in output</span></span>`+
+    `<span class="stat"><span class="v">${dup}</span><span class="l">duplicates merged</span></span>`+
+    (testRemoved?`<span class="stat"><span class="v">${testRemoved}</span><span class="l">test games removed</span></span>`:"")+
+    (capped?`<span class="stat"><span class="v">${capped}</span><span class="l">trimmed by cap</span></span>`:"");
+  const hasTpl=loaded.some(f=>f.rawObj);
+  let notes=`<div class="muted" style="margin-top:8px">Output size: <b>${kb} KB</b> · rough TTS load time ≈ <b>${est}s</b>.</div>`;
+  if(!hasTpl) notes+=`<div class="err">No template found — add at least one real <code>The GANG Sense*.json</code> book file (not a raw games export) to produce a spawnable object.</div>`;
+  else if(est>120) notes+=`<div class="warn">⚠ This book is large enough to freeze TTS on load. Consider ticking “Keep only newest …” to cap it.</div>`;
+  $("#notes").innerHTML=notes;
+  $("#dl").disabled = !(hasTpl && n>0);
+}
+
+function download(){
+  const {merged}=buildMerged();
+  const tplFile=loaded.find(f=>f.rawObj);
+  if(!tplFile){ return; }
+  const out=JSON.parse(JSON.stringify(tplFile.rawObj)); // deep clone the template save
+  const book=out.ObjectStates.find(o=>o.GMNotes==="StatsBook")
+          || out.ObjectStates.find(o=>typeof o.LuaScriptState==="string"&&o.LuaScriptState.includes('"games"'));
+  book.LuaScriptState=JSON.stringify({games:merged});
+  book.GMNotes="StatsBook";
+  book.Nickname="The GANG Sense";
+  out.SaveName="The GANG Sense (merged, "+gcount(merged)+" games)";
+  const name=($("#fname").value.trim()||"The GANG Sense MERGED.json").replace(/(\.json)?$/i,".json");
+  const blob=new Blob([JSON.stringify(out)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+/* file loading */
+function handleFiles(list){
+  const files=[...list]; if(!files.length) return;
+  let done=0;
+  files.forEach(f=>{ const rd=new FileReader();
+    rd.onload=()=>{ try{ const obj=JSON.parse(rd.result); const g=extractGames(obj);
+        if(g) loaded.push({name:f.name,games:g,rawObj:hasTemplate(obj)?obj:null});
+        else console.warn("no games in",f.name); }
+      catch(e){ console.warn("parse fail",f.name,e); }
+      if(++done===files.length) refresh(); };
+    rd.onerror=()=>{ if(++done===files.length) refresh(); };
+    rd.readAsText(f); });
+}
+const drop=$("#drop"),fileInput=$("#file");
+$("#pick").onclick=()=>fileInput.click();
+fileInput.onchange=()=>handleFiles(fileInput.files);
+$("#clear").onclick=()=>{ loaded=[]; fileInput.value=""; refresh(); };
+["notest","docap","capn"].forEach(id=>$("#"+id).addEventListener("input",refresh));
+$("#dl").onclick=download;
+$("#fname").addEventListener("input",()=>{}); // free text, no refresh needed
+
+window.addEventListener("dragover",e=>e.preventDefault());
+window.addEventListener("drop",e=>e.preventDefault());
+drop.addEventListener("dragenter",e=>{e.preventDefault();drop.classList.add("hot");});
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("hot");});
+drop.addEventListener("dragleave",e=>{ if(!drop.contains(e.relatedTarget)) drop.classList.remove("hot"); });
+drop.addEventListener("drop",e=>{ e.preventDefault(); drop.classList.remove("hot"); handleFiles(e.dataTransfer.files); });
+</script>
+</body>
+</html>

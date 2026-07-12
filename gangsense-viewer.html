@@ -98,6 +98,12 @@
   #tip{position:absolute;pointer-events:none;display:none;background:#04100c;border:1px solid var(--gold);
     border-radius:7px;padding:6px 9px;font-size:12px;transform:translate(-50%,-120%);white-space:nowrap;z-index:5}
   #tip b{color:var(--gold2)}
+  /* precise-value tooltip on any rounded percentage */
+  .pv{cursor:help}
+  .pv[data-full]{border-bottom:1px dotted rgba(240,201,74,.28)}
+  #ptip{position:fixed;pointer-events:none;display:none;background:#04100c;border:1px solid var(--gold);
+    border-radius:6px;padding:4px 9px;font-size:12px;color:var(--gold2);white-space:nowrap;z-index:60;
+    font-variant-numeric:tabular-nums;transform:translate(-50%,-135%)}
 
   /* overlay for per-game breakdown */
   #ov{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:flex-start;
@@ -210,7 +216,11 @@ function mergeIn(g){ let a=0; for(const id in g){ if(!(id in games)){ games[id]=
 
 /* ---- helpers ---- */
 const $=s=>document.querySelector(s);
-const pct=v=>v==null?"—":v.toFixed(0)+"%";
+// Rounded percentage that reveals its precise value (2 dp) on hover. `extra` appends
+// context to the tooltip (e.g. game count) so tied 98%s show why one outranks the other.
+function pct(v,extra){ if(v==null) return '<span class="pv">—</span>';
+  const full=v.toFixed(2)+"%"+(extra?" · "+extra:"");
+  return `<span class="pv" data-full="${full}">${v.toFixed(0)}%</span>`; }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const accColor=v=>v==null?"#3a3a3a":`hsl(${Math.max(0,Math.min(120,(v/100)*120))} 55% 48%)`;
 function cmp(x,y,dir){ const xn=x==null,yn=y==null; if(xn&&yn)return 0; if(xn)return 1; if(yn)return -1;
@@ -313,7 +323,7 @@ function drawBoard(){
     h+=`<tr class="clk" data-player="${esc(r.key)}" style="${r.ranked?'':'opacity:.55'}">
       <td class="rank">${r.place}</td>
       <td class="l name">${esc(r.name)}${r.ranked?'':'<span class=prov>prov.</span>'}</td>
-      <td><b>${r.rating.toFixed(0)}%</b></td>
+      <td><b>${pct(r.rating, r.gameCount+" games")}</b></td>
       <td><span class="tier ${r.tier}">${r.tier}</span></td>
       <td>${r.gameCount}</td>
       <td>${pct(r.perRound[0])}</td><td>${pct(r.perRound[1])}</td><td>${pct(r.perRound[2])}</td><td>${pct(r.perRound[3])}</td>
@@ -336,7 +346,7 @@ function drawGames(){
   for(const g of list){
     h+=`<tr class="clk" data-game="${esc(g.gameId)}">
       <td class="l">${esc(g.date)}</td><td>${g.playerCount}</td>
-      <td><b>${g.groupAccuracy.toFixed(0)}%</b></td>
+      <td><b>${pct(g.groupAccuracy, g.playerCount+" players")}</b></td>
       <td style="width:180px"><div class="bar"><i style="width:${g.groupAccuracy}%;background:${accColor(g.groupAccuracy)}"></i></div></td></tr>`;
   }
   h+="</tbody></table>";
@@ -357,7 +367,7 @@ function renderPlayer(key){
     </div>
     <div class="muted">steam id ${esc(a.key)}</div>
     <div class="rgrid">
-      <div class="cell"><div class="l">Rating</div><div class="v">${a.rating.toFixed(0)}%</div></div>
+      <div class="cell"><div class="l">Rating</div><div class="v">${pct(a.rating, a.gameCount+" games")}</div></div>
       <div class="cell"><div class="l">Best game</div><div class="v" style="color:var(--green)">${pct(a.best)}</div></div>
       <div class="cell"><div class="l">Worst game</div><div class="v" style="color:var(--red)">${pct(a.worst)}</div></div>
       <div class="cell"><div class="l">Games</div><div class="v">${a.gameCount}</div></div>
@@ -447,8 +457,8 @@ function drawHistory(a){
   for(const r of rows){
     h+=`<tr class="clk" data-game="${esc(r.gameId)}"><td class="l">${esc(r.date)}</td>
       <td>${cell(r.rounds[0])}</td><td>${cell(r.rounds[1])}</td><td>${cell(r.rounds[2])}</td><td>${cell(r.rounds[3])}</td>
-      <td><b>${r.acc==null?"—":r.acc.toFixed(0)+"%"}</b></td>
-      <td class="muted">${r.group.toFixed(0)}%</td></tr>`;
+      <td><b>${pct(r.acc)}</b></td>
+      <td class="muted">${pct(r.group)}</td></tr>`;
   }
   h+="</tbody></table>";
   const host=$("#histhost"); host.innerHTML=h;
@@ -466,7 +476,7 @@ function showGame(gameId){
   const cell=t=> t&&typeof t.score==="number"?t.score+"%":"—";
   const rows=players.map(p=>`<tr class="clk" data-player="${esc(p.key)}"><td class="l name">${esc(p.name)}</td>
     <td>${cell(p.rounds[0])}</td><td>${cell(p.rounds[1])}</td><td>${cell(p.rounds[2])}</td><td>${cell(p.rounds[3])}</td>
-    <td><b>${p.acc==null?"—":p.acc.toFixed(0)+"%"}</b></td></tr>`).join("");
+    <td><b>${pct(p.acc)}</b></td></tr>`).join("");
   const c=$("#ovcard");
   c.innerHTML=`<span class="close">&times;</span><h2>Game breakdown</h2>
     <div class="muted">${esc(rec.date||"?")} · ${players.length} players</div>
@@ -480,6 +490,15 @@ function showGame(gameId){
 function closeOv(){ $("#ov").classList.remove("on"); }
 $("#ov").onclick=e=>{ if(e.target.id==="ov") closeOv(); };
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeOv(); });
+
+/* ---- precise-value tooltip (delegated, works on any [data-full]) ---- */
+const ptip=document.createElement("div"); ptip.id="ptip"; document.body.appendChild(ptip);
+document.addEventListener("mouseover",e=>{ const t=e.target.closest&&e.target.closest("[data-full]");
+  if(t){ ptip.textContent=t.dataset.full; ptip.style.display="block";
+    ptip.style.left=e.clientX+"px"; ptip.style.top=e.clientY+"px"; } });
+document.addEventListener("mousemove",e=>{ if(ptip.style.display==="block"){
+  ptip.style.left=e.clientX+"px"; ptip.style.top=e.clientY+"px"; } });
+document.addEventListener("mouseout",e=>{ if(e.target.closest&&e.target.closest("[data-full]")) ptip.style.display="none"; });
 
 /* ---- file loading + robust drop ---- */
 function handleFiles(fileList){
