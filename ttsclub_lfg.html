@@ -404,7 +404,8 @@
       margin-bottom: 4px;
     }
     .field-label small { text-transform: none; letter-spacing: 0; font-size: 0.65rem; color: #4e5058; }
-    .command-line {
+    input[type="text"].command-line {
+      display: block;
       font-family: "Consolas", "Courier New", monospace;
       font-size: 0.81rem;
       color: #7289da;
@@ -413,8 +414,8 @@
       border-bottom: none;
       border-radius: 6px 6px 0 0;
       padding: 6px 14px;
-      user-select: none;
     }
+    input[type="text"].command-line:focus { border-color: #5865f2; border-bottom: none; background: #16171a; }
     #introText, #outroText {
       height: 76px;
       background: #1a1b1e;
@@ -468,8 +469,9 @@
   <span class="char-tip">Paste into Discord as-is · the bot posts it as "&lt;name&gt; is Looking For Players for …" · bot posts max 2,000 chars, 20 reactions · tip: shorten BGG URLs by removing the <code>/game-slug</code></span>
 </div>
 
-<div class="field-label">Intro text <small>· text shown after the command</small></div>
-<div class="command-line">/lfg announcement:</div>
+<div class="field-label">Command + intro text <small>· the command is editable in case the bot changes again · leave it empty for plain text</small></div>
+<input type="text" id="commandText" class="command-line" spellcheck="false" placeholder="/lfg announcement:" title="Bot command placed in front of the post">
+
 <textarea id="introText" spellcheck="false" placeholder="one of the following:&#10;&#10;*Can teach 'em all:*"></textarea>
 
 <div class="field-label">Outro text <small>· text appended after the game list</small></div>
@@ -729,13 +731,14 @@ function getAllColumns() {
 let GAME_DRAG_IDX = null;
 
 const BUILD_DATE  = "2026-11-22";
-// TTS Club bot switched to slash commands — "!lfg" no longer works
-const LFG_COMMAND = "/lfg announcement:";
 const BOT_MSG_LIMIT = 2000;
 const MAX_REACTIONS = 20;
 const STORAGE_KEY = "lfg_saved_v3";
 const DEFAULT_INTRO = "one of the following:\n\n*Can teach 'em all:*";
 let INTRO = DEFAULT_INTRO;
+// TTS Club bot switched to slash commands in 2026-11 ("!lfg" no longer works) — user-editable
+const DEFAULT_COMMAND = "/lfg announcement:";
+let COMMAND = DEFAULT_COMMAND;
 let OUTRO = "";
 const GAMES = [];
 
@@ -758,6 +761,7 @@ function loadData() {
         FORMAT.customCols     = s.format.customCols     ?? [];
         FORMAT.customColsNextId = s.format.customColsNextId ?? 0;
       }
+      if (s.command !== undefined) COMMAND = s.command;
       if (s.intro !== undefined) INTRO = s.intro;
       if (s.outro !== undefined) OUTRO = s.outro;
       return;
@@ -768,7 +772,7 @@ function loadData() {
 
 function persistData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    games: GAMES, intro: INTRO, outro: OUTRO,
+    games: GAMES, command: COMMAND, intro: INTRO, outro: OUTRO,
     format: { sep: FORMAT.sep, order: [...FORMAT.order], hidden: [...FORMAT.hidden], useUrl: FORMAT.useUrl, wrap: FORMAT.wrap, customCols: FORMAT.customCols, customColsNextId: FORMAT.customColsNextId }
   }));
 }
@@ -779,8 +783,9 @@ function resetDefaults() {
   FORMAT.sep = "┃"; FORMAT.order = ["icon","name","players","time","weight","desc"]; FORMAT.hidden = []; FORMAT.useUrl = true;
   FORMAT.wrap = { ...DEFAULT_WRAP };
   FORMAT.customCols = []; FORMAT.customColsNextId = 0;
-  INTRO = DEFAULT_INTRO; OUTRO = "";
+  INTRO = DEFAULT_INTRO; OUTRO = ""; COMMAND = DEFAULT_COMMAND;
   loadData();
+  document.getElementById("commandText").value = COMMAND;
   document.getElementById("introText").value = INTRO;
   document.getElementById("outroText").value = OUTRO;
   render();
@@ -806,6 +811,7 @@ function bakeDefaults() {
   html = html.replace(/const BUILD_DATE\s*=\s*"[^"]*"/, `const BUILD_DATE  = "${today}"`);
   html = html.replace(/let INTRO = "(?:[^"\\]|\\.)*"/, () => `let INTRO = ${JSON.stringify(INTRO)}`);
   html = html.replace(/let OUTRO = "(?:[^"\\]|\\.)*"/, () => `let OUTRO = ${JSON.stringify(OUTRO)}`);
+  html = html.replace(/const DEFAULT_COMMAND = "(?:[^"\\]|\\.)*"/, () => `const DEFAULT_COMMAND = ${JSON.stringify(COMMAND)}`);
   html = html.replace(new RegExp(`"${STORAGE_KEY}"`), `"${newKey}"`);
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
@@ -1169,7 +1175,8 @@ function generate() {
   const intro = INTRO.trim() ? INTRO : "";
   const outro = OUTRO.trim() ? "\n\n" + OUTRO : "";
   const announcement = toUnicodeEmoji(intro + (intro ? "\n\n" : "") + lines.join("\n") + outro);
-  const text = lines.length ? `${LFG_COMMAND} ${announcement}` : "(No games selected)";
+  const cmd = COMMAND.trim();
+  const text = lines.length ? (cmd ? `${cmd} ${announcement}` : announcement) : "(No games selected)";
   document.getElementById("output").value = text;
 
   // The bot posts the announcement text itself, so count that, not the command prefix
@@ -1229,6 +1236,12 @@ async function checkForUpdate() {
 loadData();
 render();
 renderFormatBar();
+document.getElementById("commandText").value = COMMAND;
+document.getElementById("commandText").addEventListener("input", function() {
+  COMMAND = this.value;
+  persistData();
+  generate();
+});
 document.getElementById("introText").value = INTRO;
 document.getElementById("introText").addEventListener("input", function() {
   INTRO = this.value;
