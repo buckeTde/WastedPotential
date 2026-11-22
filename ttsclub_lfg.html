@@ -465,11 +465,11 @@
 </div>
 <div class="char-info">
   <span id="charCount" class="char-count"></span>
-  <span class="char-tip">Tip: shorten BGG URLs by removing the <code>/game-slug</code> at the end · free limit 2,000 · Nitro 4,000</span>
+  <span class="char-tip">Paste into Discord as-is · the bot posts it as "&lt;name&gt; is Looking For Players for …" · bot posts max 2,000 chars, 20 reactions · tip: shorten BGG URLs by removing the <code>/game-slug</code></span>
 </div>
 
 <div class="field-label">Intro text <small>· text shown after the command</small></div>
-<div class="command-line">!lfg</div>
+<div class="command-line">/lfg announcement:</div>
 <textarea id="introText" spellcheck="false" placeholder="one of the following:&#10;&#10;*Can teach 'em all:*"></textarea>
 
 <div class="field-label">Outro text <small>· text appended after the game list</small></div>
@@ -512,7 +512,7 @@
   <span></span>
   <span></span>
   <span data-tip="Becomes a clickable hyperlink in Discord — leave the URL field empty for plain text">Name</span>
-  <span data-tip="Emoji shown in the picker are quick picks — any Discord emoji works by typing :emoji_name: directly in the field">Icon</span>
+  <span data-tip="Picker emoji are converted to real Unicode in the output, so the bot can add them as reactions. Other :shortcodes: are passed through as typed and may not become reactions">Icon</span>
   <span data-tip="Recommended player count from BGG, e.g. 3-6p or 4p">Players</span>
   <span data-tip="Estimated play time — output exactly as typed, e.g. ~45m, ~2h, or 60-120m">Time</span>
   <span data-tip="BGG complexity rating, 1 decimal place — e.g. 2.3 (out of 5)">Weight</span>
@@ -728,7 +728,11 @@ function getAllColumns() {
 }
 let GAME_DRAG_IDX = null;
 
-const BUILD_DATE  = "2026-05-24";
+const BUILD_DATE  = "2026-11-22";
+// TTS Club bot switched to slash commands — "!lfg" no longer works
+const LFG_COMMAND = "/lfg announcement:";
+const BOT_MSG_LIMIT = 2000;
+const MAX_REACTIONS = 20;
 const STORAGE_KEY = "lfg_saved_v3";
 const DEFAULT_INTRO = "one of the following:\n\n*Can teach 'em all:*";
 let INTRO = DEFAULT_INTRO;
@@ -1162,18 +1166,38 @@ function generate() {
     .filter(g => g.name.trim())
     .map(generateLine);
 
-  const intro = INTRO.trim() ? " " + INTRO : "";
+  const intro = INTRO.trim() ? INTRO : "";
   const outro = OUTRO.trim() ? "\n\n" + OUTRO : "";
-  const text = lines.length ? "!lfg" + intro + "\n\n" + lines.join("\n") + outro : "(No games selected)";
+  const announcement = toUnicodeEmoji(intro + (intro ? "\n\n" : "") + lines.join("\n") + outro);
+  const text = lines.length ? `${LFG_COMMAND} ${announcement}` : "(No games selected)";
   document.getElementById("output").value = text;
 
-  const len = lines.length ? text.length : 0;
+  // The bot posts the announcement text itself, so count that, not the command prefix
+  const len = lines.length ? announcement.length : 0;
+  const reactions = lines.length ? countEmoji(announcement) : 0;
+  const reactNote = reactions > MAX_REACTIONS
+    ? ` · ${reactions} emoji, only ${MAX_REACTIONS} can become reactions`
+    : (reactions ? ` · ${reactions} reaction${reactions === 1 ? "" : "s"}` : "");
   const el = document.getElementById("charCount");
   if (!len) { el.textContent = ""; el.className = "char-count"; }
-  else if (len <= 1800) { el.textContent = `${len} chars`; el.className = "char-count ok"; }
-  else if (len <= 2000) { el.textContent = `${len} / 2,000 — approaching free limit`; el.className = "char-count warn"; }
-  else if (len <= 4000) { el.textContent = `${len} / 4,000 — over free limit (2,000) · Nitro only`; el.className = "char-count warn"; }
-  else                  { el.textContent = `${len} / 4,000 — over Nitro limit too`; el.className = "char-count over"; }
+  else if (len <= BOT_MSG_LIMIT - 200) { el.textContent = `${len} chars${reactNote}`; el.className = "char-count " + (reactions > MAX_REACTIONS ? "warn" : "ok"); }
+  else if (len <= BOT_MSG_LIMIT)       { el.textContent = `${len} / 2,000 — getting close to the limit${reactNote}`; el.className = "char-count warn"; }
+  else                                 { el.textContent = `${len} / 2,000 — too long for the bot post${reactNote}`; el.className = "char-count over"; }
+}
+
+// Shortcodes typed into a slash-command option are not reliably converted by Discord,
+// and the bot only turns real emoji into reactions — so emit Unicode for known names.
+function toUnicodeEmoji(s) {
+  return s.replace(/:([a-z0-9_]+):/g, (m, name) => EMOJI_MAP[name] ?? m);
+}
+
+function countEmoji(s) {
+  const seen = new Set();
+  const graphemes = typeof Intl !== "undefined" && Intl.Segmenter
+    ? Array.from(new Intl.Segmenter().segment(s), x => x.segment)
+    : Array.from(s);
+  graphemes.forEach(g => { if (/\p{Extended_Pictographic}/u.test(g)) seen.add(g); });
+  return seen.size;
 }
 
 function copyOutput() {
